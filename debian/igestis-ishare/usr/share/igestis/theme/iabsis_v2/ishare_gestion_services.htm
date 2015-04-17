@@ -1,0 +1,84 @@
+<!-- INCLUDE overall_header.htm -->
+<h1>{LANG_ISHARE_Gestion_services_description_short}</h1>
+<h2>{LANG_ISHARE_Gestion_services_description}</h2>
+
+<link rel="stylesheet" href="{TEMPLATE_URL}/ishare.css" media="screen" type="text/css">
+<!-- INCLUDE overall_header2.htm -->
+
+<script type="text/javascript" src="{TEMPLATE_URL}/ishare.js"></script>
+<script type="text/javascript">
+    show_hide_block("administration_menu");
+
+    function restart_service(service) {
+        var line = document.getElementById(service + "_line");
+        if(line) line.innerHTML = '<img src="{TEMPLATE_URL}/images/loading.gif" /> {LANG_Loading}';
+	
+        xajax_ishare_restart_service(service);
+    }
+
+    function stop_service(service) {
+        var line = document.getElementById(service + "_line");
+        if(line) line.innerHTML = '<img src="{TEMPLATE_URL}/images/loading.gif" /> {LANG_Loading}';
+	
+        xajax_ishare_stop_service(service);
+    }
+
+    function install_updates() {
+        if(confirm("{LANG_ISHARE_Confirm_pgrade_igestis}")) {
+            document.getElementById('ishare-maj-status').innerHTML = "Téléchargement des mises à jour en cours ...";
+            xajax_ishare_install_updates();
+        }
+        
+    }
+    
+    function ishare_upgrades_more_informations() {
+        if(document.getElementById('upgrades_list').style.display == "none") {
+            document.getElementById('upgrades_list').style.display = "block";
+            document.getElementById('more-info-developped').innerHTML = "-";            
+        }
+        else {
+            document.getElementById('upgrades_list').style.display = "none";
+            document.getElementById('more-info-developped').innerHTML = "+";
+        }
+    }
+</script>
+
+
+<div class="main-content-top-actions">
+    <span class="inner">
+
+    </span> 
+</div>
+
+
+<div class="main-content-footer">
+    <span class="inner">		
+
+        <span id="services_table"><!-- INCLUDE ishare_services_table.htm --></span>
+
+        <div id="table_show_updates">
+            <!-- INCLUDE ishare_table_show_updates.htm -->
+        </div>
+        <script type="text/javascript">xajax_ishare_check_updates();</script>
+
+        <table class="normal_table" style="margin-bottom:10px;">
+            <tr>
+                <th>{LANG_ISHARE_Harddrive_name}</th>
+                <th>{LANG_ISHARE_Harddrive_status}</th>	
+            </tr>
+            <tbody>
+                <!-- INCLUDE ishare_harddrive_status.htm -->
+            </tbody>	
+        </table>
+
+        <table class="normal_table" style="margin-bottom:10px;">
+            <tr>
+                <th>{LANG_ISHARE_Save_status}</th>
+            </tr>
+            <tr class="ligne1">
+                <td>{SAVE_STATUS}<!-- IF SAVE_MESSAGE --><br />{SAVE_MESSAGE}<!-- ENDIF --></td>
+            </tr>	
+        </table>
+    </span>
+</div>
+<!-- INCLUDE overall_footer.htm -->

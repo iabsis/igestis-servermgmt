@@ -1,0 +1,598 @@
+#!/bin/sh
+
+VERBOSE="NO"
+
+declare -x PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Emplacement du montage de la cassette
+TAPE_MOUNT="$(cat /etc/ishare/backup/backup.conf | grep "RESTORE_PATH" | cut -d= -f 2 | cut -d" " -f 2)"
+mkdir -p /var/log/ishare/
+
+
+GLOBALVARS=/mnt/etc/igestis/ConfigIgestisGlobalVars.php
+
+set_mysql_rootpw() {
+
+	   MYSQL_BOOTSTRAP="chroot /mnt /usr/sbin/mysqld --bootstrap --user=mysql --skip-grant-tables"
+
+       tfile=`mktemp`
+       if [ ! -f "$tfile" ]; then
+               return 1
+       fi
+
+       # this avoids us having to call "test" or "[" on $rootpw
+       cat << EOF > $tfile
+USE mysql;
+UPDATE user SET password=PASSWORD("$pw") WHERE user='root';
+FLUSH PRIVILEGES;
+EOF
+       if grep -q 'PASSWORD("")' $tfile; then
+               retval=0
+       elif [ "$1" = "online" ]; then
+               chroot /mnt mysql --no-defaults -u root -h localhost <$tfile >/dev/null
+               retval=$?
+       else
+               $MYSQL_BOOTSTRAP <$tfile
+               retval=$?
+       fi
+       rm -f $tfile
+       return $retval
+}
+
+
+replace_value_global_vars()
+{
+
+sed -i "s#const[[:space:]]*$1.*#const $1 = $2;#g" $GLOBALVARS
+sed_return_value=$?
+
+if [ ! "$sed_return_value" = 0 ] ; then
+    echo "error : the variable $1 was not found in the file $GLOBALVARS"
+fi
+
+}
+
+
+
+### Envoi du mail (mail_to "sujet" "message") destinataire récupéré de /etc/ishare/backup/backup.conf
+
+send_mail() {
+
+    subject="$1"
+    message="$2"
+    recipient="$(cat /etc/ishare/backup/backup.conf | grep "EMAIL" | cut -d= -f 2 | cut -d" " -f 2)"
+    domain="$(cat /etc/mailname)"
+    time="$(date +"%Y%m%d%H%M")"
+
+content="$(echo -e "$message" | txt2html -8)"
+#content="$(echo -e "$message" | iconv --from-code=UTF-8 --to-code=ISO-8859-1 | txt2html)"
+#subject="$(echo -e "$subject" | iconv --from-code=UTF-8 --to-code=ISO-8859-1)"
+
+
+(
+echo "From: noanswer@$domain"
+echo "To: $recipient "
+echo "Subject: $subject"
+echo "Content-Type: text/html; charset=\"UTF-8\""
+echo "$content"
+) | /usr/lib/sendmail -t
+
+}
+
+mail_to() {
+    
+    subject="$1"
+    message="$2"
+    recipient="$(cat /etc/ishare/backup/backup.conf | grep "EMAIL" | cut -d= -f 2 | cut -d" " -f 2)"
+    
+	echo -e "$message" | mail -s "$subject" "$recipient"
+}
+
+
+
+### Création d'un pid, aucun paramètre requis
+
+create_pid() {
+	pid=$(echo $$)
+	echo $pid > /var/run/ishare-backup
+}
+
+### Supression du pid, aucun paramètre requis
+
+rm_pid() {
+	rm /var/run/ishare-backup
+}
+
+### Fonction vérifiant que la dernière commande n'a pas générée une erreur fatale, si c'est le cas, on stoppe le script, et on envoi un mail avec les erreurs
+
+get_fatal_error() {
+    # On vérifie que l'erreur n'est pas fatale
+
+    if [ ! "$out" = 0 ] ; then
+      fatal_error=$(cat /usr/share/ishare/ishare-errors | grep -v ^# | while read i ; do
+    	if [ "$command" = "$(echo "$i" | cut -f 1)" ] && [ "$out" = "$(echo "$i" | cut -f 2)" ] ; then
+    	    if [ "$(echo "$i" | cut -f 3)" = 2 ] ; then
+    	    	echo 1
+    	    fi
+        fi
+      done)
+    fi
+    
+    # Qu'est ce qu'on fait en cas d'erreur fatale
+    
+    if [ "$fatal_error" = 1 ] ; then
+        echo -e "$cumul_error"
+        send_mail "La sauvegarde du serveur $(hostname) à échouée" "$cumul_error"
+        echo "Backup script has been finished unsuccessfully on $(date +"%d/%m/%Y %H:%M") : $cumul_error" >> /var/log/ishare/backup
+        run rm_pid
+    	exit 1
+   fi
+}
+
+# Lance les commandes et récupère les erreurs en fonction de la fonction et du numéro d'erreur
+
+run() {
+  command="$1"
+  eval "$command" >> $logfile 2>&1
+  out="$?"
+  
+  # On vérifie qu'il n'y ai pas d'erreur dans l'éxécution du programme
+  if [ ! "$out" = 0 ] ; then
+    
+    # En cas d'erreur, on regarde si l'erreur est connue
+    error=$(cat /usr/share/ishare/ishare-errors | grep -v ^# | while read i ; do
+    	if [ "$command" = "$(echo "$i" | cut -f 1)" ] && [ "$out" = "$(echo "$i" | cut -f 2)" ] ; then
+			echo "$i" | cut -f 4
+   		fi
+   	done)
+
+    # Si l'erreur n'est pas connue
+    if [ -z "$error" ] ; then
+      error="L'erreur n'a pas été trouvé dans le fichier ($command sortie $out)"
+    fi
+
+    # On cumule l'erreur avec les erreurs précédentes
+    if [ ! -z "$cumul_error" ] ; then
+      cumul_error="$cumul_error \n$error"
+    else
+      cumul_error="$error"
+    fi
+  fi
+}
+
+###   Détection du lecteur de sauvegarde, la variable $tape contiendra le device du premier lecteur détecté   ###
+detect_tape() {
+
+tape=$(ls /sys/block/ | while read i ; do
+info=$(cat /sys/block/$i/device/model 2> /dev/null)
+info=$(echo $info)
+if [ "$info" = GoVault ] || [ "$info" = RDX ] || [ "$info" = RD1000 ]; then
+	echo "/dev/$i"
+	break
+fi
+done)
+
+if [ -z "$tape" ] ; then
+	return 1
+fi
+
+}
+###   Formatage de la cassette   ###
+format_tape() {
+  if [ -z "$tape" ] ; then
+    return 3
+  fi
+  if [ ! -e "$tape" ] ; then
+    return 2
+  fi
+  # On partitionne le disque amovible.
+  parted $tape mklabel msdos -s
+  size=$(parted $tape unit GB print | grep $tape  | awk '{print $3}')
+  parted $tape mkpartfs primary ext2 1049kB $size -s
+  if [ ! "$?" = 0 ] ; then
+    return 4
+  fi
+  
+  sleep 1
+
+  if [ ! "$?" = 0 ] ; then
+    return 5
+  fi
+  return 1
+}
+
+###   Détection de fetchmail en cours de lancement   ###
+detect_fetchmail() {
+  ps ax | grep fetchmail | grep -v "grep fetchmail" | while read i ; do
+    sleep 1
+    count=$(($count+1))
+    if [ "$count" = 120 ] ; then
+      return 1
+    fi
+  done
+  if [ ! "$?" = 0 ] ; then
+  	return 1
+  fi
+}
+
+# On teste si le lecteur était déjà monté
+test_mount() {
+  if [ -z "$tape" ] ; then
+    echo "La variable $tape n'est pas initialisé"
+    exit 1
+  fi
+  count=0
+  while [ ! -z "$(mount | grep $(echo $tape)1)" ] && [ $count -lt 60 ] ; do
+  	touch /var/run/ishare-backup-wait
+  	sleep 60
+  	((count++))
+  	rm /var/run/ishare-backup-wait
+  done
+}
+
+###  Montage du lecteur   ###
+mount_tape() {
+  if [ -z "$tape" ] ; then
+    echo "La variable $tape n'est pas initialisé"
+    exit 1
+  fi
+
+  
+  if [ ! -z "$( mount | grep `echo $tape`1 )" ] ; then
+    mount | grep `echo $tape`1 | while read i ; do
+      umount `echo $tape`1
+      return 1
+    done
+  fi
+  result=$?
+
+  mkdir -p $TAPE_MOUNT/
+  blockdev --rereadpt $tape
+  if [ "$?" = 1 ] ; then
+  	return 2
+  fi
+  sleep 1
+  mount -t ext2 $(echo $tape)1 $TAPE_MOUNT/ -o acl
+  mount_status=$?
+  if [ "$mount_status" = 1 ] ; then
+  	return 3
+  fi
+  if [ ! "$mount_status" = 0 ] ; then
+    return 4
+  fi
+  rm -f /root/.TAPE
+  ln -sf $TAPE_MOUNT/ /root/.TAPE
+}
+
+
+###   Démontage du lecteur   ###
+umount_tape() {
+  if [ -z "$tape" ] ; then
+    exit 1
+  fi
+  mount | grep `echo $tape`1 | while read i ; do
+      umount `echo $tape`1
+  done
+  return 0
+}
+
+### Vérification du montage de la cassette ###
+mounted_tape() {
+  if [ -z "$tape" ] ; then
+    return 2
+  fi
+  mounted=$(mount | grep `echo $tape`1)
+  if [ -z "$mounted" ] ; then
+  	return 1
+  fi
+}
+
+###   Copie différentielle des fichiers   ###
+copy_files() {
+
+  mounted_tape
+  if [ ! "$?" = 0 ] ; then
+  	return 1
+  fi
+  
+  
+  date_start=$(date +"%d/%m/%Y %H:%M")
+  if [ -e $TAPE_MOUNT/backup-2 ] ; then
+    rm -rf $TAPE_MOUNT/backup-2/
+  fi
+  if [ -e $TAPE_MOUNT/backup-1 ] ; then
+    mv $TAPE_MOUNT/backup-1 $TAPE_MOUNT/backup-2
+  fi
+  if [ -e $TAPE_MOUNT/lastest ] ; then
+    cp -aRl $TAPE_MOUNT/lastest $TAPE_MOUNT/backup-1
+  else
+    mkdir -p $TAPE_MOUNT/lastest/
+  fi
+  
+  cat /etc/ishare/backup/folder_list.conf | while read i ; do
+    if [ -z "$(echo $i | grep "^#")" ] ; then
+      mkdir -p $TAPE_MOUNT/lastest/$i/
+      rsync -aAH --delete $i/* $TAPE_MOUNT/lastest/$i/
+    fi
+  done
+
+  mkdir -p $TAPE_MOUNT/lastest/packages/
+  dpkg --get-selections > $TAPE_MOUNT/lastest/packages/packages.list
+  
+  rm $TAPE_MOUNT/lastest/date
+  echo $date_start > $TAPE_MOUNT/lastest/date
+  
+}
+
+test_write() {
+  mounted_tape
+  touch $TAPE_MOUNT/test_write
+  if [ ! -e "$TAPE_MOUNT/test_write" ] ; then
+    umount_tape
+    return 1
+  fi
+  rm $TAPE_MOUNT/test_write
+}
+
+mysql_dump() {
+
+  mounted_tape
+  if [ ! "$?" = 0 ] ; then
+  	return 1
+  fi
+
+  rm -rf $TAPE_MOUNT/lastest/mysql/
+
+  login=$(cat /etc/mysql/debian.cnf | grep user | tail -n 1 | cut -d = -f 2 | cut -d" " -f 2)
+  password=$(cat /etc/mysql/debian.cnf | grep password | tail -n 1 | cut -d = -f 2 | cut -d" " -f 2)
+  mkdir -p /etc $TAPE_MOUNT/lastest/mysql/
+  mysqlshow -u$login -p$password | grep -v "^+-" | grep -v "Databases" | cut -d"|" -f 2 | cut -d" " -f 2 | while read i ; do
+  	mysqldump -u$login -p$password $i > $TAPE_MOUNT/lastest/mysql/$i.sql
+  done
+}
+
+ldap_dump() {
+
+  mounted_tape
+  if [ ! "$?" = 0 ] ; then
+  	return 1
+  fi
+
+  mkdir -p $TAPE_MOUNT/lastest/ldap/
+  /usr/sbin/slapcat > $TAPE_MOUNT/lastest/ldap/ldap.ldif 2> /dev/null
+}
+
+test_softwares() {
+  test -e /usr/bin/rsync
+  if [ ! "$?" = 0 ] ; then
+  	return 2
+  fi
+  
+}
+
+
+acl_dump() {
+  mkdir -p $TAPE_MOUNT/lastest/acl/
+  getfacl /home/samba/data/* > $TAPE_MOUNT/lastest/acl/backup.acl 2> /dev/null
+}
+
+
+## Change ishare password (mysql, ldap, passwd, smb)
+## Syntax chg_passwd "partition number"
+chg_password() {
+
+part=$1
+
+if [ -z "$part" ] ; then
+	if [ "$VERBOSE" = "YES" ] ; then
+		echo "Error no argument given for chg_password"
+		echo "Press enter to continue"
+		read
+	fi
+	return 1
+fi
+
+if [ -z "$pw" ] ; then
+	if [ "$VERBOSE" = "YES" ] ; then
+		echo "Error pw variable is not set for chg_password"
+		echo "Press enter to continue"
+		read
+	fi
+	return 1
+fi
+
+if [ -z "$dev" ] ; then
+	echo "Error dev variable is not set for chg_password"
+	echo "Press enter to continue"
+	read
+	return 1
+fi
+
+## Mount Partition
+echo -e "\E[40;36m\033[1mMount root partition on a temp location. \033[0m"
+mount $dev$part /mnt
+mount --bind /proc /mnt/proc
+mount --bind /run /mnt/run
+
+echo -e "\E[40;36m\033[1mChange password for Mysql. \033[0m"
+## Mysql password
+chroot /mnt /etc/init.d/mysql stop
+
+set_mysql_rootpw
+
+## Ldap Password
+chroot /mnt /etc/init.d/samba stop
+
+
+[ -e /mnt/etc/pam_ldap.secret ] && echo $pw > /mnt/etc/pam_ldap.secret
+[ -e /mnt/etc/libnss-ldap.secret ] && echo $pw > /mnt/etc/libnss-ldap.secret
+
+ldap_pw="$(chroot /mnt slappasswd -s $pw)"
+
+if [ -e /mnt/etc/ldap/slapd.conf ] ; then
+
+	sed -i s/^rootpw.*/"$(echo rootpw $ldap_pw | sed -e 's/\//\\\//g')"/g /mnt/etc/ldap/slapd.conf
+	chroot /mnt /etc/init.d/slapd start
+	sleep 2
+else
+	echo -e "# {1}hdb, config
+	dn: olcDatabase={1}hdb,cn=config
+	changetype: modify
+	replace: olcRootPW
+	olcRootPW: $ldap_pw" > /mnt/admin_pw.ldif
+
+
+	echo -e "dn: cn=admin,dc=domaine,dc=local
+	changetype: modify
+	replace: userPassword
+	userPassword: $ldap_pw" > /mnt/admin_tree_pw.ldif
+
+	chroot /mnt /etc/init.d/slapd stop
+	chroot /mnt /etc/init.d/slapd start
+	sleep 2
+
+	echo -e "\E[40;36m\033[1mChange password for OpenLDAP. \033[0m"
+	chroot /mnt ldapmodify -Y EXTERNAL -H ldapi:/// -f /admin_pw.ldif
+	chroot /mnt ldapmodify -cxD "cn=admin,dc=domaine,dc=local" -w $pw -f /admin_tree_pw.ldif
+
+	rm -f /mnt/admin_pw.ldif
+	rm -f /mnt/admin_tree_pw.ldif
+
+fi
+
+echo -e "\E[40;36m\033[1mReplace password in config files. \033[0m"
+[ -e /mnt/etc/igestis/config.php ] && sed -i "s/^define(\"LDAP_PASSWORD\",.*/define(\"LDAP_PASSWORD\", \"$pw\");/g" /mnt/etc/igestis/config.php
+[ -e /mnt/etc/igestis/ConfigIgestisGlobalVars.php ] && replace_value_global_vars LDAP_PASSWORD $pw
+
+## Smbldap Password
+sed -i "s/^slavePw=.*/slavePw=\"$pw\"/g" /mnt/etc/smbldap-tools/smbldap_bind.conf
+sed -i "s/^masterPw=.*/masterPw=\"$pw\"/g" /mnt/etc/smbldap-tools/smbldap_bind.conf
+
+echo -e "\E[40;36m\033[1mSet OpenLDAP password in Samba. \033[0m"
+chroot /mnt smbpasswd -w $pw
+
+echo -e "\E[40;36m\033[1mChange password for Samba. \033[0m"
+chroot /mnt echo -e "$pw\n$pw" |(chroot /mnt smbpasswd -s root)
+
+echo -e "\E[40;36m\033[1mRestart Samba. \033[0m"
+chroot /mnt /etc/init.d/samba start
+
+echo -e "\E[40;36m\033[1mSet password for root OpenLDAP account. \033[0m"
+chroot /mnt smbldap-passwd root << EOF > /dev/null
+$pw
+$pw
+EOF
+
+echo -e "\E[40;36m\033[1mSet password for local root account. \033[0m"
+chroot /mnt passwd root << EOF > /dev/null
+$pw
+$pw
+EOF
+
+chroot /mnt /etc/init.d/samba stop
+chroot /mnt /etc/init.d/slapd stop
+
+umount /mnt/run
+umount /mnt/proc
+umount /mnt
+
+if [ "$VERBOSE" = "YES" ] ; then
+	echo "Please check for errors bellow"
+	echo "Press enter to continue"
+	read
+fi
+
+/etc/init.d/samba start
+/etc/init.d/slapd start
+/etc/init.d/mysql start
+
+}
+
+try_dhcp() {
+
+DHCP_CONF=/etc/dhcp/dhclient-ishare.conf
+
+if [ ! -e $DHCP_CONF ] ; then
+
+	echo -e "option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;\n\
+	request subnet-mask, broadcast-address, time-offset, routers,\
+	domain-name, domain-name-servers, domain-search, host-name,\
+	netbios-name-servers, netbios-scope, interface-mtu,\
+	rfc3442-classless-static-routes, ntp-servers;\n\
+	timeout 10;" > $DHCP_CONF
+
+fi
+
+ifconfig eth0 down
+dhclient -cf $DHCP_CONF eth0 > /dev/null 2>&1
+
+}
+
+write_network() {
+
+part=$1
+
+if [ -z "$part" ] ; then
+	echo "Error : no argument given"
+	return 1
+fi
+
+if [ -z "$dev" ] ; then
+	echo "Error dev variable is not set for chg_password"
+	echo "Press enter to continue"
+	read
+	return 1
+fi
+
+NET_CONF="/mnt/etc/network/interfaces"
+
+mount $dev$part /mnt
+
+[ -e "$NET_CONF" ] && cp $NET_CONF $NET_CONF-$(date '+%F_%H-%M-%S')
+
+dhcpd_init=$(ls -1 /etc/init.d/*dhcp* | head | cut -d "/" -f 4)
+
+if [ -z "$gateway" ] ; then
+
+echo "auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+	address $address
+	netmask $netmask" > $NET_CONF
+
+    if [ -z "$dhcpd_init" ] ; then
+        echo "Error : Unable to find any dhcp server installed".
+    else
+	   chroot /mnt update-rc.d $dhcpd_init defaults 40
+	fi
+
+	sed -i s/^INTERFACES=.*/"$(echo INTERFACE=\"eth0\")"/g /mnt/etc/default/$dhcpd_init
+
+else
+
+	echo "auto lo
+	iface lo inet loopback
+
+	auto eth0
+	iface eth0 inet static
+		address $address
+		netmask $netmask
+		gateway $gateway" > $NET_CONF
+
+    if [ ! -z "$dhcpd_init" ] ; then
+        chroot /mnt update-rc.d -f $dhcpd_init remove
+    fi
+
+fi
+
+dialog  --backtitle "Premier démarrage du Mini Server iShare" --msgbox "Pour votre \
+information, le serveur a été configuré avec une adresse ip statique qui est la suivante : \n\n\
+adresse IP : $address \nmasque de réseau : $netmask \npasserelle : $gateway \n\n\
+Ces informations utiles seront affichées à la fin de cet assistant, vous n'avez \
+donc pas besoin de les noter maintenant." 15 80
+
+umount /mnt
+
+}

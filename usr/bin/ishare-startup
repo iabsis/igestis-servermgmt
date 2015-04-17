@@ -1,0 +1,179 @@
+#!/bin/sh
+
+declare -x PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+declare -x LANG="fr_FR.UTF-8"
+
+source /usr/lib/ishare/ishare-library
+dev=/dev/sda
+
+if [ -e /etc/first-start ] ; then
+
+# Suppression des fichiers dhcp en cache
+if [ -e /var/lib/dhcp3/ ] ; then
+    rm /var/lib/dhcp3/* -f
+    touch /var/lib/dhcp3/dhcpd.leases
+    touch /var/lib/dhcp3/dhclient.leases
+else
+    rm /var/lib/dhcp/* -f
+    touch /var/lib/dhcp/dhcpd.leases
+    touch /var/lib/dhcp/dhclient.leases
+fi
+
+# 
+dialog --backtitle "Premier démarrage du Mini Server iShare" --msgbox "Merci d'avoir commandé un Mini Serveur iShare. \n\n\
+Les étapes suivantes ne prendront que quelques minutes, tapez sur la touche 'Entrée' de votre clavier pour valider chaque étape." 10 60
+
+dialog --backtitle "Configuration du réseau" --msgbox "Pour la configuration automatique \
+du réseau, veuillez connecter maintenant votre serveur à votre Box (Livebox, Freebox,...). \
+Si vous ne possédez pas de Box, le système vous attribuera une adresse automatiquement. \
+Cette opération prend environ 10 secondes." 10 60
+
+unset address
+
+while [ -z "$address" ] ; do
+
+	dialog --infobox "Patientez pendant la configuration automatique du réseau." 5 60
+
+	try_dhcp
+
+	address=$(ifconfig eth0 | grep "inet ad" | cut -d: -f2 | cut -d" " -f1)
+
+	if [ -z "$address" ] ; then
+
+		dialog --yes-label "Continuer" --no-label "Recommencer" --backtitle "Configuration \
+		automatique de votre réseau" --defaultno --yesno "Impossible d'avoir une adresse de votre \
+		routeur, si vous n'avez pas de routeur, vous pouvez continuer sans quiétude, \
+		sinon, vérifiez que votre câble réseau est branché correctement." 10 60
+
+		if [ $? = 0 ] ; then
+
+			address=192.168.1.100
+			netmask=255.255.255.0
+			unset gateway
+
+		fi
+
+	else
+
+		netmask="$(ifconfig eth0 | grep "inet ad" | cut -d: -f4 | cut -d" " -f1)"
+		gateway="$(echo $(route -n | grep "UG" | grep eth0) | cut -d" " -f 2)"
+
+	fi
+
+done
+
+write_network 2
+
+
+unset pw
+
+while [ -z "$pw" ] ; do
+
+pw=$(dialog --no-cancel --insecure --passwordbox "Veuillez maintenant choisir \
+un mot de passe pour le compte administrateur root. Vous pourrez utiliser ce mot \
+de passe pour accéder à tous les services de votre serveur."  10 60 2>&1 > /dev/tty1)
+
+pw2=$(dialog --no-cancel --insecure --passwordbox "Veuillez maintenant confirmer \
+votre mot de passe saisi précédemment."  10 60 2>&1 > /dev/tty1)
+
+pw=$(echo $pw | grep -E "^.{5,16}$")
+
+if [ ! "$pw" = "$pw2" ] ; then
+
+	unset pw
+
+	dialog --backtitle "Erreur de mot de passe" --msgbox "Les deux mots de passe saisis \
+	ne sont pas identiques, ou bien trop court (moins de 5 caractères), ou bien trop long \
+	(plus de 16 caractères). Veuillez recommencer la saisie." 10 60
+
+elif [ -z "$pw" ] ; then
+
+	unset pw
+
+	dialog --backtitle "Erreur de mot de passe" --msgbox "Le champs de saisie du mot de passe \
+	ne peut être vide. Veuillez recommencer la saisie." 10 60
+
+fi
+
+done
+
+## We change the password
+chg_password 2
+
+dialog --backtitle "Mot de passe changé" --msgbox "Le mot de passe a été changé avec succès \
+pour tous les services ishare" 10 60
+
+	
+rm /etc/first-start
+
+unset mail
+
+while [ -z "$mail" ] ; do
+
+mail=$(dialog --no-cancel --inputbox "Veuillez maintenant choisir \
+un mail administratif pour votre serveur. Vous recevrez sur cette adresse toutes \
+les notifications du serveur telles que la sauvegarde."  10 60 2>&1 > /dev/tty1)
+
+mail2=$(dialog --no-cancel --inputbox "Veuillez maintenant confirmer \
+votre mail saisi précédemment."  10 60 2>&1 > /dev/tty1)
+
+mail=$(echo $mail | grep -E "^[a-zA-Z0-9\-\.\_]+@{1}[a-zA-Z0-9\-\.\_]+\.{1}[a-zA-Z0-9]{2,4}$")
+
+if [ ! "$mail" = "$mail2" ] ; then
+
+	unset mail
+
+	dialog --backtitle "Erreur de mail" --msgbox "Les deux mails saisis \
+	ne sont pas identiques ou bien le format du mail est incorrect. \
+	Veuillez recommencer la saisie." 10 60
+
+elif [ -z "$mail" ] ; then
+
+	dialog --backtitle "Erreur de mail" --msgbox "Le champs de saisie du mail \
+	ne peut être vide. Veuillez recommencer la saisie." 10 60
+
+	unset mail
+
+fi
+
+done
+
+chg_mail 2
+
+dialog --backtitle "Changement de mail" --msgbox "Le mail administratif à été changé \
+avec succès." 10 60
+
+
+fi
+
+
+while [ 0 = 0 ] ; do
+
+clear
+
+echo
+echo
+echo
+echo "Informations essentielles de votre serveur."
+echo
+echo -e "     Nom du serveur : \E[40;36m\033[1m "$(hostname)" \033[0m"
+echo
+echo -e "==============================="
+echo
+echo -e "     Adresse IP            : \E[40;36m\033[1m "$(ifconfig eth0 | grep "inet adr" | cut -d: -f2 | cut -d" " -f1)" \033[0m"
+echo -e "     Masque de sous réseau : \E[40;36m\033[1m "$(/sbin/ifconfig eth0 | grep "inet adr" | cut -d: -f4 | cut -d" " -f1)" \033[0m"
+echo -e "     Passerelle            : \E[40;36m\033[1m "$(echo $(route -n | grep "UG" | grep eth0) | cut -d" " -f 2)" \033[0m"
+echo
+echo -e "==============================="
+echo
+echo "Utilisez les adresses ci-dessous afin d'accéder aux pages de configuration de votre serveur :"
+echo
+echo -e "     * \E[40;36m\033[1m http://"$(ifconfig eth0 | grep "inet adr" | cut -d: -f2 | cut -d" " -f1)"/igestis/ \033[0m (Windows)"
+echo -e "     * \E[40;36m\033[1m http://"$(hostname)".local/igestis/ \033[0m (Linux)"
+echo
+
+sleep 60
+
+
+done
+

@@ -1,0 +1,48 @@
+<!-- INCLUDE overall_header.htm -->
+<h1>{LANG_ISHARE_Gestion_remote_control_description_short}</h1>
+<h2>{LANG_ISHARE_Gestion_remote_control_description}</h2>
+
+<link rel="stylesheet" href="{TEMPLATE_URL}/ishare.css" media="screen" type="text/css">
+<!-- INCLUDE overall_header2.htm -->
+
+ 
+
+
+<script type="text/javascript">
+show_hide_block('administration_menu');
+
+function enable_remote_control() {
+	document.getElementById('remote_control_status').innerHTML = '<img src="{TEMPLATE_URL}images/ishare_remote_control_loading.gif" />';
+	xajax_ishare_start_remote_control();
+}
+
+
+
+function update_remote_control_status() {
+   xajax_ishare_update_remote_control_status();
+   setTimeout("update_remote_control_status()",5000);
+}
+
+</script>
+
+
+
+					
+<div class="main-content-top-actions">
+	<span class="inner">		
+	</span> 
+</div>
+
+
+<div class="main-content-footer">
+	<span class="inner">
+	
+		<div id="remote_control_status" style="text-align:center; padding-top:40px;">
+			<!-- INCLUDE ishare_remote_control_status.htm -->
+		</div>
+		
+		<script type="text/javascript">update_remote_control_status();</script>
+				
+	</span>
+</div>
+<!-- INCLUDE overall_footer.htm -->

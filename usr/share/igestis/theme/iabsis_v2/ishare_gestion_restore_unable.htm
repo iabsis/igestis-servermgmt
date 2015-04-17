@@ -1,0 +1,91 @@
+<!-- INCLUDE overall_header.htm -->
+<h1>{LANG_ISHARE_Gestion_restore_file_error_description_short}</h1>
+<h2>{LANG_ISHARE_Gestion_restore_file_error_description}</h2>
+
+<link rel="stylesheet" href="{TEMPLATE_URL}/ishare.css" media="screen" type="text/css">
+<!-- INCLUDE overall_header2.htm -->
+
+<script type="text/javascript">
+show_hide_block('administration_menu');
+
+function p_focused(field)
+{
+	document.getElementById("p_" + field).className = "p_focused";
+}
+
+function p_blur(name)
+{
+	var p = document.getElementById("p_" + name);
+	var span = document.getElementById("span_" + name);
+	var field = document.getElementById(name);
+
+	p.className = "";
+	
+}
+
+function ishare_add_date_list(date_list, folder_list) {
+	var list = "";
+	document.getElementById('date_list_fieldset').style.display = "block";
+	for(i = 0; i < date_list.length; i++) {
+		if(i == 2) list += '<label>&nbsp;</label>';
+		list += '<input type="radio" name="date" value="' + folder_list[i] + '"';
+		if(folder_list[i] == '{DATE}') list += ' checked="checked"';
+		list += ' /> ' + date_list[i] + '<br />';
+	}
+	document.getElementById('date_list').innerHTML = list;
+}
+
+function valid_form() {
+	if(document.getElementById('date_list_fieldset').style.display != "block") {
+		alert("{LANG_ISHARE_Mount_tape_and_choose_date}");
+		return false;
+	}
+	
+	var radio_list = document.getElementsByName('date');
+	var radio_checked = false;
+	
+	for(i = 0; i < radio_list.length; i++) {
+		if(radio_list[i].checked) {
+			radio_checked = true;
+		}
+	}
+	
+	if(!radio_checked) {
+		alert("{LANG_ISHARE_Choose_a_date}");
+		return false;
+	}
+	
+	return true;
+}
+
+function restore_file(file_name) {
+	if(confirm("{LANG_ISHARE_Restore_entities} '" + file_name + "' ?")) {
+
+		messageObj.setHtmlContent('{LANG_ISHARE_Wait_during_restore}');
+		messageObj.setSize(300,150);
+		messageObj.setCssClassMessageBox(false);
+		messageObj.setSource(false);	// no html source since we want to use a static message here.
+		messageObj.setShadowDivVisible(true);	// Disable shadow for these boxes	
+		messageObj.display();
+		
+		xajax_ishare_restore_file('{DATE}', file_name);
+		//messageObj.close();
+	}
+}
+</script>
+
+					
+<div class="main-content-top-actions">
+	<span class="inner">
+		<!-- Bloc de liens ajouter and co -->
+	</span> 
+</div>
+
+<div class="main-content-footer">
+	<span class="inner">	
+                <div id="remote_control_status" style="text-align:center; padding-top:40px;">
+                    <img src="{TEMPLATE_URL}/images/{LANG_IMG_FOLDER}/ishare_backup_running.png" alt="Sauvegarde en cours" />
+		</div>
+	</span>
+</div>
+<!-- INCLUDE overall_footer.htm -->

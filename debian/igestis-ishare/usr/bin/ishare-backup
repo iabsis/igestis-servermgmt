@@ -1,0 +1,58 @@
+#!/bin/bash
+
+logfile=/var/log/ishare/backup-verbose
+
+source /usr/lib/ishare/ishare-library
+
+echo -e "\n##### Backup of $(date +"%d/%m/%Y %H:%M")" >> $logfile
+
+run test_softwares
+
+get_fatal_error
+
+run create_pid
+
+run detect_tape
+
+get_fatal_error
+
+run test_mount
+
+run mount_tape
+
+mount=$out
+
+if [ "$mount" = 4 ] ; then
+        run format_tape
+        get_fatal_error
+        run mount_tape
+        get_fatal_error
+fi
+
+get_fatal_error
+
+run test_write
+
+get_fatal_error
+
+run detect_fetchmail
+
+run copy_files
+
+run mysql_dump
+
+run ldap_dump
+
+run acl_dump
+
+run umount_tape
+
+run rm_pid
+
+if [ -z "$cumul_error" ] ; then
+        send_mail "La sauvegarde s'est terminée avec succès" "La sauvegarde ayant commencé à : \n - $date_start \n\net terminée à\n\n - $(date +"%d/%m/%Y %H:%M") \n s'est déroulée avec succès"
+else
+        send_mail "Il y a des avertissements pour la sauvegarde" "La sauvegarde ayant commencé à : \n - $date_start \n\net terminée à\n - $(date +"%d/%m/%Y %H:%M") \n\n s'est exécutée, mais avec des avertissements suivants :\n \n $(echo -e "$cumul_error")"
+fi
+
+echo "Backup script has been finished successfully on $(date +"%d/%m/%Y %H:%M")" >> /var/log/ishare/backup

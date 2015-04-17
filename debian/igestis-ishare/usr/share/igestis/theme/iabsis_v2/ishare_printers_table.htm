@@ -1,0 +1,15 @@
+<!-- Ce fichier a été découpé volontairement afin d'être accessible depuis le script ajax -->
+
+<!-- IF PRINTERS_LIST -->
+	<!-- BEGIN PRINTERS_LIST -->
+	<tr class="{PRINTERS_LIST.CLASS}">
+		<td>{PRINTERS_LIST.NAME}</td>
+		<td>{PRINTERS_LIST.STATUS}</td>
+		<td id="printer{PRINTERS_LIST.ID}" style="text-align:right;">			
+			<a href="javascript:delete_printer('{PRINTERS_LIST.ID}', '{PRINTERS_LIST.NAME}')"><img alt="Supprimer" src="{TEMPLATE_URL}/images/del.gif" /></a>
+		</td>
+	</tr>
+	<!-- END PRINTERS_LIST -->
+<!-- ELSE -->
+	<tr><td colspan="3">{LANG_ISHARE_No_printer_detected}</td></tr>
+<!-- ENDIF -->
