@@ -1,0 +1,43 @@
+{% extends "common.twig" %}
+
+
+{% block cssFiles %}
+    {{ parent() }}
+    <link href="modules/ServerMgmt/assets/css/ServerMgmt.css?{{ SERVERMGMT_VERSION }}" rel="stylesheet">
+{% endblock %}
+
+{% block javascriptFiles  %}
+    {{ parent() }}
+    <script src="modules/ServerMgmt/assets/js/ServerMgmt.js?{{ SERVERMGMT_VERSION }}"></script>
+    <script src="modules/ServerMgmt/assets/js/jquery.dataTables.rowReordering.js?{{ SERVERMGMT_VERSION }}"></script>
+
+    <script>
+    function create_or_duplicate_document(id, projectId) {
+        $('#new-selling-document-modal').find('[name="copyFrom"]').val(id);
+
+        $('#new-selling-document-modal').find('[name="projectId"]').val(projectId);
+
+        var $userField = $("#new-selling-document-modal #id-customerUser");
+        if(projectId) {
+            $userField.parents(".control-group").hide();
+        }
+        else {
+            $userField.parents(".control-group").show();
+        }
+        $('#new-selling-document-modal').modal();
+    }
+
+    function create_or_duplicate_project(id) {
+        $('#new-project-modal').modal();
+    }
+    </script>
+
+{% endblock %}
+
+{% block translations %}
+    {{ parent() }}
+    {% include 'ServerMgmt/translations.twig' %}
+{% endblock %}
+
+{% block content %}
+{% endblock %}

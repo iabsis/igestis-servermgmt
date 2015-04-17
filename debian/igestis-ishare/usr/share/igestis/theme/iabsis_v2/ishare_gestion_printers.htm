@@ -1,0 +1,43 @@
+<!-- INCLUDE overall_header.htm -->
+<h1>{LANG_ISHARE_Gestion_my_printers_description_short}</h1>
+<h2>{LANG_ISHARE_Gestion_my_printers_description}</h2>
+
+<link rel="stylesheet" href="{TEMPLATE_URL}/ishare.css" media="screen" type="text/css">
+<!-- INCLUDE overall_header2.htm -->
+
+
+<script type="text/javascript">
+show_hide_block("administration_menu");
+
+
+function delete_printer(id, printer) {
+	var line = document.getElementById("printer" + id);
+	if(line) line.innerHTML = '<img src="{TEMPLATE_URL}/images/loading.gif" /> {LANG_Loading}';
+	
+	xajax_ishare_printer_delete(printer);
+}
+
+</script>
+					
+<div class="main-content-top-actions">
+	<span class="inner">
+		
+	</span> 
+</div>
+
+
+<div class="main-content-footer">
+	<span class="inner">		
+		<table class="normal_table">
+			<tr>
+				<th>{LANG_ISHARE_Printer}</th>	
+				<th>{LANG_ISHARE_Printer_status}</th>	
+				<th style="width:200px;">{LANG_Actions}</th>
+			</tr>
+			<tbody id="printers_table">
+				<!-- INCLUDE ishare_printers_table.htm -->
+			</tbody>	
+		</table>
+	</span>
+</div>
+<!-- INCLUDE overall_footer.htm -->

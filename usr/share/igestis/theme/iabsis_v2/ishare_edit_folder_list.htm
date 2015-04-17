@@ -1,0 +1,59 @@
+<!--INCLUDE overall_popup_header.htm -->
+<script type="text/javascript">
+ 
+function p_focused(field)
+{
+	document.getElementById("p_" + field).className = "p_focused";
+}
+
+function p_blur(name)
+{
+	var p = document.getElementById("p_" + name);
+	var span = document.getElementById("span_" + name);
+	var field = document.getElementById(name);
+
+	p.className = "";
+	
+}
+
+var valid_auto = false;
+
+function valid_form()
+{/* Test function before the form submit */
+	
+	return true;
+}
+</script>
+
+<div id="popup-header">
+	<h3>{LANG_ISHARE_New_ISHARE_saved_folders_description_short}</h3>
+	<h4>{LANG_ISHARE_New_ISHARE_saved_folders_description}</h4>
+</div>
+
+<form name="report" action="updatedb.php" method="post" class="popup_form" enctype="multipart/form-data" onsubmit="return valid_form()">
+<input name="section" type="hidden" id="section" value="config" />
+<input name="action" type="hidden" id="from2" value="{action}" />
+<input name="old_folder_name" type="hidden" id="from2" value="{old_folder_name}" />
+
+<fieldset>
+<div class="upperleft">
+	<div class="upperright">
+		<div class="lowerleft">
+			<div class="lowerright">
+				<h5>{LANG_ISHARE_Report}</h5>				
+				<p id="p_folder_name">
+					<label for="folder_name">{LANG_ISHARE_folder_name_label}</label>
+					<input name="folder_name" type="text" id="folder_name" value="{folder_name}" onFocus="javascript:p_focused(this.name)" onBlur="javascript:p_blur(this.name)" />
+					<span class="error_message" id="span_folder_name"></span>
+				</p>
+			</div>
+		</div>
+	</div>
+</fieldset>
+
+
+<input type="image" src="{TEMPLATE_URL}images/bt_valider.gif" class="img" />
+<br />
+<br />
+</form>
+<!--INCLUDE overall_popup_footer.htm -->

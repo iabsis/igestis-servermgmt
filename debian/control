@@ -1,0 +1,16 @@
+Source: igestis-ishare
+Section: web
+Priority: extra
+Maintainer: Gilles Hemmerlé <gilles.h@iabsis.com>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: igestis-ishare
+Architecture: all
+Depends: parted, dialog, rsync, igestis-file-manager-ldap, igestis-ldap (>=1.1.0) | igestis (>=2.0.0)
+Suggests: sane-utils, hylafax-client
+Description: iGestis module : Manager your iShare server.
+ This module permit to change some server settings without
+ taking any risk.
+ .
+ You need a iShare server to use this module !

@@ -1,0 +1,73 @@
+<!-- INCLUDE overall_header.htm -->
+<h1>{LANG_ISHARE_Gestion_folders_description_short}</h1>
+<h2>{LANG_ISHARE_Gestion_folders_description}</h2>
+
+<link rel="stylesheet" href="{TEMPLATE_URL}/ishare.css" media="screen" type="text/css">
+<!-- INCLUDE overall_header2.htm -->
+
+ 
+
+
+<script type="text/javascript">
+show_hide_block('administration_menu');
+
+function del_ISHARE_folders(id)
+{
+	if(confirm("{LANG_ISHARE_Delete_ISHARE_folders}"))
+	{
+		window.location.href = "{MODULE_FOLDER_URL}updatedb.php?section=ishare_folders&action=del&id=" + encodeURIComponent(id);
+	}
+}
+
+function edit_folder(folder) {
+    popup(640,480,'{MODULE_FOLDER_URL}ishare_folders.php?action=edit&id=' + encodeURIComponent(folder));
+}
+
+</script>
+
+
+
+					
+<div class="main-content-top-actions">
+	<span class="inner">
+		<!-- Bloc de liens ajouter and co -->
+		<ul class="search-form">
+			<form action="index.php" method="get">
+			<input type="hidden" name="Page" value="module" />
+			<input type="hidden" name="module_name" value="ISHARE" />
+	
+			<li><input class="search-field" onFocus="javascript:empty_on_focus(this, '{LANG_SEARCH_FOR}')" type="text" name="search_for" value="<!-- IF search_for -->{search_for}<!-- ELSE -->{LANG_SEARCH_FOR}<!-- ENDIF -->" /></li>				
+			
+			</form>
+		</ul>
+		
+		<ul class="action_menu">
+			<li class="last-row"><a href="javascript:popup(640, 480, '{MODULE_FOLDER_URL}ishare_folders.php?action=new','no','yes','no')">{LANG_ISHARE_New_folder}</a></li>
+		</ul>
+	</span>
+</div>
+
+<div class="main-content-footer">
+	<span class="inner">
+		<table class="normal_table" width="790px">
+		<tr>
+			<th>{LANG_ISHARE_folder_name}</th>
+
+			<th>{LANG_Action}</th>
+		</tr>
+		<!-- IF ISHARE_folders_LIST -->
+			<!-- BEGIN ISHARE_folders_LIST -->
+			<tr class="{ISHARE_folders_LIST.CLASS}">
+		<td>{ISHARE_folders_LIST.show_folder_name}</td>
+				<td><a href="javascript:edit_folder('{ISHARE_folders_LIST.folder_name}')"><img src="{TEMPLATE_URL}images/write.png" /></a>
+					<a href="javascript:del_ISHARE_folders('{ISHARE_folders_LIST.folder_name}')"><img src="{TEMPLATE_URL}images/del.gif" /></a>
+				</td>
+			</tr>
+			<!-- END ISHARE_folders_LIST -->
+		<!-- ELSE -->
+			<tr class="ligne1"><td colspan="2">{LANG_No_records}</td></tr>
+		<!-- ENDIF ISHARE_folders_LIST -->
+		</table>
+	</span>
+</div>
+<!-- INCLUDE overall_footer.htm -->

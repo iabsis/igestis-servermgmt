@@ -1,0 +1,53 @@
+{% extends "ServerMgmt/common.twig" %}
+
+{% set title = {
+                'title': "Projects"|trans,
+                'help': "A project is a collection of sales documents, purchases invoices and interventions in one place."|trans} %}
+
+
+{% block content %}{{ parent() }}
+
+<script type="text/javascript">
+    function delete_project(id) {
+        bootbox.confirm("{% trans %}Are you sure that you want to delete this folder ?{% endtrans %}", "{% trans %}No{% endtrans %}", "{% trans %}Yes{% endtrans %}", function(result) {
+            if(result) window.location.href="{{ url('servermgmt_folder_del', {"Id":''}) }}" + id;
+        });
+    }
+</script>
+
+{# start #}
+<div class="row-fluid" align="right">
+    <a href="javascript:;" onclick="javascript:create_or_duplicate_project(null);" class="btn btn-success btn-small"><i class="icon-plus-sign icon-white"></i> {% trans %}New project{% endtrans %}</a>
+</div>
+<br />
+
+{% import "table.twig" as table_data %}
+{{ table_data.datatable() }}
+
+<table cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-condensed table-striped table-hover" id="table_data">
+    <thead>
+        <tr>
+            <th>{% trans %}Folder name{% endtrans %}</th>
+            <th>{% trans %}Actions{% endtrans %}</th>
+        </tr>
+    </thead>
+    <tbody>
+       {% for folder in data_table %}
+            <tr>
+                <td>{{ folder }}</td>
+                <td>
+                    <a href="{{ url('servermgmt_folder_edit', {'Id':folder}) }}" class="btn btn-mini a-visible-line-on-over">
+                        <i class="icon-edit"></i> {% trans %}Edit{% endtrans %}
+                    </a>
+                    <a href="javascript:servermgmt_folder_del('{{ folder }}')" class="btn btn-danger btn-mini a-visible-line-on-over">
+                        <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
+                    </a>
+                </td>
+            </tr>
+      {% endfor %}
+    </tbody>
+</table>
+{# End #}
+
+
+{% endblock %}

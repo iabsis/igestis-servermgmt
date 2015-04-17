@@ -1,0 +1,22 @@
+# Ce fichier est utilisé pour récupérer les codes d'erreurs des différentes fonctions.
+# Il est composé des colonnes suivantes :
+# 1 -> nom de la fonction
+# 2 -> numéro de l'erreur de sortie de la fonction
+# 3 -> Est ce que l'erreur est grave (1 non, on continue le script, 2 oui, on sort du script)
+# 4 -> Commentaire de l'erreur
+
+detect_tape	1	2	Aucun lecteur de sauvegarde n'a été détecté
+mount_tape	1	2	La variable $tape n'est pas initialisée
+mount_tape	2	2	Il n'y a pas de cassette dans le lecteur de sauvegarde
+mount_tape	3	1	Le lecteur était déjà monté lors de la sauvegarde
+mount_tape	4	1	Impossible de monter la cassette
+detect_fetchmail	1	1	Fetchmail ne n'est pas arrêté
+test_mount	1	1	La sauvegarde a été retardée car la cassette était déjà montée
+format_tape	1	1	La cassette à été formatée
+format_tape	2	2	La variable $tape n'est pas initialisée, formatage impossible
+format_tape	3	2	Le périphérique détecte n'existe plus
+format_tape	4	2	Impossible de partitionner la cassette
+format_tape	5	2	Impossible de formater la cassette
+test_softwares	2	2	La commande rsync n'a pas été trouvée sur le système
+test_write	1	2	Impossible d'écrire sur la cassette, vérifier que le locket rouge est sur le cadenas ouvert
+mysql_dump	5	1	Attention, il n'y a plus de place sur la cassette. Cette erreur devrait se résorber d'elle même, sinon appeler votre support.

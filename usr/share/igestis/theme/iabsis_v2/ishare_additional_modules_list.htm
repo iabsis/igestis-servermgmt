@@ -1,0 +1,31 @@
+<table class="normal_table table table-bordered table-condensed table-striped">
+<tr>
+        <th>{LANG_ISHARE_Additional_modules}</th>
+        <th>{LANG_ISHARE_Description}</th>
+        <th>{LANG_ISHARE_Your_version}</th>
+        <th>{LANG_ISHARE_Last_version}</th>
+        <th>{LANG_Actions}</th>
+</tr>
+<tbody id="additional_modules">
+         <!-- IF ADDITIONAL_MODULES_LIST -->
+	<!-- BEGIN ADDITIONAL_MODULES_LIST -->
+	<tr class="{ADDITIONAL_MODULES_LIST.CLASS}">
+		<td>{ADDITIONAL_MODULES_LIST.MODULE}</td>
+		<td style="width:400px;">{ADDITIONAL_MODULES_LIST.DESCRIPTION}<!-- IF ADDITIONAL_MODULES_LIST.module_just_installed --><div id="description-{ADDITIONAL_MODULES_LIST.MODULE}" class="module_description_warning">{LANG_ISHARE_Dont_forget_to_set_rights}</div><!-- ENDIF --></td>
+		<td>{ADDITIONAL_MODULES_LIST.YOUR_VERSION}</td>
+		<td>{ADDITIONAL_MODULES_LIST.LAST_VERSION}</td>
+		<td id="td-{ADDITIONAL_MODULES_LIST.MODULE}">
+			<!-- IF ADDITIONAL_MODULES_LIST.INSTALLED -->
+				<!-- IF ADDITIONAL_MODULES_LIST.UPGRADE_AVAILABLE -->
+					<a href="javascript:ishare_install_module('{ADDITIONAL_MODULES_LIST.MODULE}')"><img src="{TEMPLATE_URL}/images/{LANG_IMG_FOLDER}/ishare_update.png" alt="{LANG_ISHARE_Upgrade}" title="{LANG_ISHARE_Upgrade}" /></a>
+				<!-- ENDIF -->
+				<a href="javascript:ishare_uninstall_module('{ADDITIONAL_MODULES_LIST.MODULE}')"><img src="{TEMPLATE_URL}/images/{LANG_IMG_FOLDER}/ishare_uninstall.png" alt="{LANG_ISHARE_Uninstall}" title="{LANG_ISHARE_Uninstall}" /></a>
+			<!-- ELSE --><a href="javascript:ishare_install_module('{ADDITIONAL_MODULES_LIST.MODULE}')"><img src="{TEMPLATE_URL}/images/{LANG_IMG_FOLDER}/ishare_install.png" alt="{LANG_ISHARE_Install}" title="{LANG_ISHARE_Install}" /></a><!-- ENDIF -->
+		</td>
+	</tr>
+	<!-- END ADDITIONAL_MODULES_LIST-->
+<!-- ELSE -->
+	<tr><td>Aucun module n'a été trouvé</td></tr>
+<!-- ENDIF -->
+</tbody>
+</table>
