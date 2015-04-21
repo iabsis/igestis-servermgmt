@@ -90,4 +90,9 @@ class ConfigModuleVars
         return self::$params['DATA_FOLDER_MGMT'];
     }
 
+    public static function backupLogFile()
+    {
+        return self::$params['BACKUPNINJA_LOG_FILE'];
+    }
+
 }

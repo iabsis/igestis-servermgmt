@@ -16,18 +16,26 @@ class SambaController extends \IgestisController {
         $modulesList = \IgestisModulesList::getInstance();
         exec("../modules/ServerMgmt/bin/helper getDataFolderAcl", $aclDump);
 
-        foreach($aclDump as $line){
-//          if(ereg("^# file: (.*\/)*", $line, $match)) {
-        if(ereg("^# file: (.*\/)*", $line, $match)) {
-              print $match[0] . "<br>";
-    					print str_replace($line, $match[0]);
-  				}
-        }
-        exit;
 
+        foreach($aclDump as $line){
+          if(ereg("^# file: (.*\/)*", $line, $match)) {
+                $folder=preg_replace('/^\#\ file: (.*\/)*/','', $line);
+      					$folderTree[$folder] = "";
+    			}
+
+          if(ereg("^user:.+:", $line, $match)) {
+            $user = preg_replace('/:([rwx-])*/','', preg_replace('/^user:/','', $line));
+            $right = preg_replace('/user:.+:/', '', $line);
+            if ($folderTree[$folder]) {
+              $folderTree[$folder] = array_merge($folderTree[$folder], array($user => $right));
+            } else {
+              $folderTree[$folder] = array($user => $right);
+            }
+    			}
+        }
 
         $this->context->render("ServerMgmt/pages/sambaListSharing.twig", array(
-            'data_table' =>  array_diff(scandir(ConfigModuleVars::dataFolder()), array('..', '.'))
+            'data_table' =>  $folderTree
         ));
     }
 }

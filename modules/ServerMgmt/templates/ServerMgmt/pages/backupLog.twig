@@ -1,0 +1,14 @@
+{% extends "ServerMgmt/common.twig" %}
+
+{% set title = {
+                'title': "Backup status"|trans,
+                'help': "Here you find the status of the latest backup run."|trans} %}
+
+
+{% block content %}{{ parent() }}
+
+<div class="well">
+  {{ line }}
+</div>
+
+{% endblock %}

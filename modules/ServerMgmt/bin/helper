@@ -26,6 +26,16 @@ case $action in
         echo ${line}
     done <<< "$aclList"
 
+    exit
+
+    # future feature to get subfolder level as well.
+    aclSubList=$(${getfacl} $(getValueConfig DATA_FOLDER_MGMT)/*/* 2>/dev/null)
+
+    while IFS= read -r line ; do
+        echo ${line}
+    done <<< "$aclSubList"
+
+
   ;;
 
 esac
