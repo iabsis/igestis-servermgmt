@@ -1,0 +1,31 @@
+#!/bin/bash
+
+cwd=$(dirname "${BASH_SOURCE[0]}")
+
+action=${1}
+args=${@}
+
+getfacl=/bin/getfacl
+
+getValueConfig()
+{
+
+grep "^$1[[:space:]]*=.*" ${cwd}/../config/config.ini | \
+  cut -d= -f 2 | \
+  cut -d" " -f 2 | \
+  sed 's/\"//g'
+}
+
+case $action in
+
+  getDataFolderAcl)
+
+    aclList=$(${getfacl} $(getValueConfig DATA_FOLDER_MGMT)/* 2>/dev/null)
+
+    while IFS= read -r line ; do
+        echo ${line}
+    done <<< "$aclList"
+
+  ;;
+
+esac
