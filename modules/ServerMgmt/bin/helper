@@ -5,7 +5,9 @@ cwd=$(dirname "${BASH_SOURCE[0]}")
 action=${1}
 args=${@}
 
-getfacl=/bin/getfacl
+getfacl="/bin/getfacl"
+setfacl="/bin/setfacl -m"
+rmfacl="/bin/setfacl -x"
 
 getValueConfig()
 {
@@ -28,13 +30,25 @@ case $action in
 
     exit
 
-    # future feature to get subfolder level as well.
-    aclSubList=$(${getfacl} $(getValueConfig DATA_FOLDER_MGMT)/*/* 2>/dev/null)
+  ;;
 
-    while IFS= read -r line ; do
-        echo ${line}
-    done <<< "$aclSubList"
+  setDataFolderAcl)
 
+    username=${1}
+    folder=${2}
+    right=${3}
+
+    case ${right} in
+      read)
+        ${setfacl} u:${username}:r-x $(getValueConfig DATA_FOLDER_MGMT)/${folder}
+      ;;
+      write)
+        ${setfacl} u:${username}:rwx $(getValueConfig DATA_FOLDER_MGMT)/${folder}
+      ;;
+      none)
+        ${rmfacl} u:${username} $(getValueConfig DATA_FOLDER_MGMT)/${folder}
+      ;;
+    esac
 
   ;;
 

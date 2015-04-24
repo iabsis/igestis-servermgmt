@@ -1,0 +1,1 @@
+www-data ALL = NOPASSWD:/usr/share/igestis/modules/ServerMgmt/bin/helper

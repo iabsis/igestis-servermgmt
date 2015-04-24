@@ -1,0 +1,165 @@
+#!/bin/sh
+
+declare -x PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+declare -x LANG="fr_FR.UTF-8"
+
+if [ -e /etc/first-start ] ; then
+  while [ 0 = 0 ] ; do
+    clear
+    echo
+    echo
+    echo
+    echo "Essential server information."
+    echo
+    echo -e "     Server name : \E[40;36m\033[1m "$(hostname)" \033[0m"
+    echo
+    echo -e "=========================================================="
+    echo
+    echo -e "     IP address            : \E[40;36m\033[1m "$(ifconfig eth0 | grep "inet adr" | cut -d: -f2 | cut -d" " -f1)" \033[0m"
+    echo -e "     Netmask               : \E[40;36m\033[1m "$(/sbin/ifconfig eth0 | grep "inet adr" | cut -d: -f4 | cut -d" " -f1)" \033[0m"
+    echo -e "     Gateway               : \E[40;36m\033[1m "$(echo $(route -n | grep "UG" | grep eth0) | cut -d" " -f 2)" \033[0m"
+    echo
+    echo -e "=========================================================="
+    echo
+    echo
+    sleep 60
+  done
+fi
+
+cwd=$(dirname "${BASH_SOURCE[0]}")
+source $cwd/../lib/libigestis
+
+# location of config files
+netConfig="/etc/network/interfaces"
+hostConfig="/etc/hosts"
+
+mysqlPkg="mysql-server-5.5"
+dhcpdPkg="isc-dhcp-server"
+
+# services to take care configuration
+services="system mysql samba4"
+
+# software to randomize password
+software="igestis-samba sogo-samba"
+
+### WELCOME SCREEN ###
+
+dialog --backtitle "First startup of iGestis OS" --msgbox "Thank you for using iGestis OS. \n\n\
+The following setup will take only few minutes, please type 'Enter' key to validate each steps." 10 60
+
+### NETWORK CONFIGURATION ###
+
+dialog --backtitle "Network configuration" --msgbox "In order to make the network automatic configuration \
+please connect now your server to your router. \
+If you don't have any router, just validate the server will choose for you an IP address and will enable \
+the DHCP service. This step takes arround 10 seconds." 10 60
+
+unset address
+
+while [ -z "$address" ] ; do
+
+	dialog --infobox "Please wait during the network configuration." 5 60
+
+	tryDhcp eth0
+
+	address=$(ifconfig eth0 | grep "inet ad" | cut -d: -f2 | cut -d" " -f1)
+
+	if [ -z "$address" ] ; then
+
+		dialog --yes-label "Continue" --no-label "Try again" --backtitle "Automatic \
+		network configuration" --defaultno --yesno "Unable to get an IP address from \
+		your router, if you don't have any router, you can continue without worries, \
+		else check your network cable." 10 60
+
+		if [ $? = 0 ] ; then
+
+			address=192.168.1.100
+			netmask=255.255.255.0
+			unset gateway
+
+      writeNetworkStatic eth0
+      sed -i "s/INTERFACES=.*/INTERFACES=\"\"/" /etc/default/${dhcpdPkg}
+      update-rc.d -f ${dhcpdPkg} remove
+
+		fi
+
+	else
+
+		netmask="$(ifconfig eth0 | grep "inet ad" | cut -d: -f4 | cut -d" " -f1)"
+		gateway="$(echo $(route -n | grep "UG" | grep eth0) | cut -d" " -f 2)"
+
+    writeNetworkStatic eth0
+    sed -i "s/INTERFACES=.*/INTERFACES=\"eth0\"/" /etc/default/${dhcpdPkg}
+    update-rc.d ${dhcpdPkg} defaults 40
+
+	fi
+
+done
+
+### PASSWORD CONFIGURATION ###
+
+unset pw
+
+while [ -z "$pw" ] ; do
+
+pw=$(dialog --no-cancel --insecure --passwordbox "Please choose right now the Administrator \
+password. Keep it safe as this will be used to access on all administrative service of this server\
+."  10 60 2>&1 > /dev/tty1)
+
+pw2=$(dialog --no-cancel --insecure --passwordbox "Please confirm the password given \
+at the step before to check you didn't made any mistake."  10 60 2>&1 > /dev/tty1)
+
+pw=$(echo $pw | grep -E "^.{5,16}$")
+
+if [ ! "$pw" = "$pw2" ] ; then
+
+	unset pw
+
+	dialog --backtitle "Password error" --msgbox "The both password given \
+	didn't match, or are too short (less than 5 characters), or too long\
+	(more than 16 characters). Please try again." 10 60
+
+elif [ -z "$pw" ] ; then
+
+	unset pw
+
+	dialog --backtitle "Password error" --msgbox "The password cannot be empty.\
+	Please try again" 10 60
+
+fi
+
+done
+
+for package in ${services} ; do
+  if ! chg_password ${package} ; then
+    error=$(echo $package)
+  fi
+done
+
+if ${error} ; then
+  dialog --backtitle "Password change failed" --msgbox "The password change has been failed for the following services. ${error}" 10 60
+else
+  dialog --backtitle "Password changed" --msgbox "The password has been changed successfully." 10 60
+fi
+
+### RANDOMIZE PASSWORDS ###
+
+unset error
+
+for password in ${software} ; do
+  if ! randomizePasword ${password} ; then
+    error=$(echo $software)
+  fi
+done
+
+if ${error} ; then
+  dialog --backtitle "Password randomizer failed" --msgbox "The password randomize has been failed for the following software. ${error}" 10 60
+else
+  dialog --backtitle "Password randomized" --msgbox "The password randomize has been done successfully." 10 60
+fi
+
+### FINISHING ###
+
+rm /etc/first-start
+
+exit 0

@@ -1,0 +1,174 @@
+#!/bin/bash
+
+generate_random_key() {
+  dd if=/dev/urandom bs=1 count=62 2> /dev/null | tr -c -d '[A-Za-z0-9]'
+}
+
+chg_password() {
+  service=$1
+  password=$2
+
+  [ -z "$service" -o -z "$password" ] && return 1
+
+  case ${service} in
+
+    system)
+      # resetting Root password
+passwd root << EOF > /dev/null 2>&1
+${password}
+${password}
+EOF
+    ;;
+
+    mysql)
+      # resetting Mysql password - using preseed debconf way
+      if dpkg -s ${mysqlPkg} > /dev/null 2>&1 ;then
+        echo "${mysqlPkg} mysql-server/root_password password ${password}
+        ${mysqlPkg} mysql-server/root_password_again password ${password}" | debconf-set-selections
+        dpkg-reconfigure -pcritical ${mysqlPkg}
+      else
+        echo "Package ${mysqlPkg} is not installed"
+      fi
+    ;;
+
+    samba4)
+      # resetting samba4 password
+      samba-tool user setpassword Administrator --newpassword=$password
+    ;;
+
+    openldap)
+      # getting ldap base from debian configuration, will failed if different base.
+      domain=$(debconf-get-selections | grep "slapd/domain" | cut -f 4)
+      [ -z ${domain} ] && return 1
+      ldapBase="dc=`echo ${domain} | sed 's/^\.//; s/\./,dc=/g'`"
+      [ -z ${ldapBase} ] && return 1
+
+      passwordLdap="$(slappasswd -s $password)"
+
+      tmpLdapConfig=$(mktemp)
+      tmpLdapBase=$(mktemp)
+
+      echo -e "# {1}hdb, config
+      dn: olcDatabase={1}hdb,cn=config
+      changetype: modify
+      replace: olcRootPW
+      olcRootPW: ${passwordLdap}" > ${tmpLdapConfig}
+
+
+      echo -e "dn: cn=admin,dc=domaine,dc=local
+      changetype: modify
+      replace: userPassword
+      userPassword: ${passwordLdap}" > ${tmpLdapBase}
+
+      ldapmodify -Y EXTERNAL -H ldapi:/// -f ${tmpLdapConfig}
+    	ldapmodify -cxD "cn=admin,${ldapBase}" -w $password -f ${tmpLdapBase}
+
+      rm -f ${tmpLdapConfig} ${tmpLdapBase}
+    ;;
+
+    *)
+      echo "Warning: unknown called service ${service}"
+      return 1
+    ;;
+
+  esac
+
+}
+
+# TODO warning: this function is absolutely not finished
+randomizePasword() {
+  service=$1
+  user=$2
+
+  case ${service} in
+    igestis-mysql)
+      password=$(generate_random_key)
+      sed -i "s/\$dbpass.*/$dbpass=\'$password\'/" /etc/igestis/debian-db.php
+      sed -i "s/dbc_dbpass=.*/dbc_dbpass=\'$password\'/" /etc/dbconfig-common/igestis.conf
+    ;;
+
+    sogo-mysql)
+
+    ;;
+
+    igestis-samba)
+      username="igestis-ad-rw-$(generate_random_key)"
+      password=$(generate_random_key)
+
+      samba-tool user create ${username} ${password}
+      samba-tool user setexpiry --noexpiry ${username}
+
+      samba-tool group addmembers Administrators ${username}
+
+      sed -i "s/LDAP_ADMIN.*/LDAP_ADMIN = \"${username}\"/" /etc/igestis/config.ini
+      sed -i "s/LDAP_PASSWORD.*/LDAP_PASSWORD = \"${password}\"/" /etc/igestis/config.ini
+
+    ;;
+
+    sogo-samba)
+      username="sogo-ad-ro-$(generate_random_key)"
+      password=$(generate_random_key)
+      domain=$(samba-tool domain info 127.0.0.1 | grep Forest | cut -f2 -d: | cut -d' ' -f2)
+
+      samba-tool user create ${username} ${password}
+      samba-tool user setexpiry --noexpiry ${username}
+      sed -i "s/bindDN.*/bindDN = ${username}@${domain}/" /etc/sogo/sogo.conf
+      sed -i "s/bindPassword.*/bindPassword = ${password}/" /etc/sogo/sogo.conf
+    ;;
+  esac
+
+}
+
+tryDhcp() {
+
+  eth=$1
+  [ -z "$eth" ] && return 1
+
+  # remove old dhcp information
+  rm /var/lib/dhcp3/* -f
+  rm /var/lib/dhcp/* -f
+
+  tmpDhcp=$(mktemp)
+
+  echo -e "option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;\n\
+  request subnet-mask, broadcast-address, time-offset, routers,\
+  domain-name, domain-name-servers, domain-search, host-name,\
+  netbios-name-servers, netbios-scope, interface-mtu,\
+  rfc3442-classless-static-routes, ntp-servers;\n\
+  timeout 10;" > ${tmpDhcp}
+
+  ifconfig ${eth} down
+  dhclient -cf ${tmpDhcp} ${eth} > /dev/null 2>&1
+
+  rm -f ${tmpDhcp}
+
+}
+
+writeNetworkStatic() {
+
+  eth=$1
+  [ -z "$eth" ] && return 1
+
+  [ -e "${netConfig}" ] && cp ${netConfig} /var/backups/${netConfig}-$(date '+%F_%H-%M-%S')
+  [ -e "${hostConfig}" ] && cp ${hostConfig} /var/backups/${hostConfig}-$(date '+%F_%H-%M-%S')
+
+  [ -z $gateway ] || gateway=$address
+
+  echo "auto lo
+	iface lo inet loopback
+
+	auto ${eth}
+	iface ${eth} inet static
+		address $address
+		netmask $netmask
+		gateway $gateway" > ${netConfig}
+
+
+
+  echo "127.0.0.1	localhost
+  $address  debian.domain.local	debian
+  ::1     localhost ip6-localhost ip6-loopback
+  ff02::1 ip6-allnodes
+  ff02::2 ip6-allrouters" > ${hostConfig}
+
+}
