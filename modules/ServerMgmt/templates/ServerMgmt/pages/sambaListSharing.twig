@@ -15,29 +15,6 @@
     }
 </script>
 
-{% for folder, user in data_table %}
-<div id="edit-{{ folder }}" class="modal hide fade">
-  <form class="modal-form form-horizontal" id="contact_data" method='post' action=''>
-      <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h3>{% trans %}{{ folder }} folder{% endtrans %}</h3>
-      </div>
-      <div class="modal-body">
-
-          {% for user, right in user %}
-            {% if right == "rwx" %}{% set write = false %}{% endif %}
-            {{ forms.switchbox('none', user, write, null, null, null, "None"|trans, "Write"|trans) }}
-          {% endfor %}
-          </fieldset>
-          </div>
-      <div class="modal-footer">
-                  <a href="#" class="btn" data-dismiss="modal" >Close</a>
-                  <button type="submit" class="btn btn-primary">{% trans %}Save changes{% endtrans %}</button>
-      </div>
-  </form>
-</div>
-{% endfor %}
-
 {# start #}
 <div class="row-fluid" align="right">
     <a href="javascript:;" onclick="javascript:create_or_duplicate_project(null);" class="btn btn-success btn-small"><i class="icon-plus-sign icon-white"></i> {% trans %}New folder{% endtrans %}</a>
@@ -47,43 +24,53 @@
 {% import "table.twig" as table_data %}
 {{ table_data.datatable() }}
 
-<table cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-condensed table-striped table-hover" id="table_data">
-    <thead>
-        <tr>
-            <th>{% trans %}Folder name{% endtrans %}</th>
-            <th>{% trans %}Actions{% endtrans %}</th>
-        </tr>
-    </thead>
-    <tbody>
-       {% for folder, user in data_table %}
+<div class="accordion" id="folder-list">
+  {% for folder, user in data_table %}
+  <div class="accordion-group">
+    <div class="accordion-heading">
+      <div class="accordion-toggle" data-parent="#folder-list" >
+        <a href="#collapse{{ loop.index }}" data-toggle="collapse"><strong>{{ folder }}</strong> <small>({% trans %}click here to see users rights){% endtrans %}</small></a>
+
+          <a href="javascript:delete_account('{{ row.id }}')" class="btn btn-danger btn-mini">
+              <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
+          </a>
+
+      </div>
+
+    </div>
+    <div id="collapse{{ loop.index }}" class="accordion-body collapse out">
+      <div class="accordion-inner">
+        <table cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-condensed table-striped table-hover">
+          <thead>
             <tr>
-                <td>
-                  <p>
-                    <strong>{{ folder }}</strong>
-                  </p>
-                  <p class="">
-                    <ul>
-                      {% for user, right in user %}
-                          <li>
-                            {{ user }}: {% if right == "rwx" %}can write files in the folder{% elseif right == "r-x" %}can only read files in the folder{% endif %} <small>({{ right }})</small><br>
-                          </li>
-                      {% endfor %}
-                    </ul>
-                  </p>
-                </td>
-                <td>
-                    <a href="#edit-{{ folder }}" class="btn btn-mini a-visible-line-on-over" data-toggle="modal">
-                        <i class="icon-edit"></i> {% trans %}Edit{% endtrans %}
-                    </a>
-                    <a href="javascript:servermgmt_folder_del('{{ folder }}')" class="btn btn-danger btn-mini a-visible-line-on-over">
-                        <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
-                    </a>
-                </td>
+                <th>{% trans %}Username{% endtrans %}</th>
+                <th>{% trans %}Can read in folder{% endtrans %}</th>
+                <th>{% trans %}Can write in folder{% endtrans %}</th>
             </tr>
-      {% endfor %}
-    </tbody>
-</table>
-{# End #}
+          </thead>
+          <tbody>
+            {% for employee in employee_list %}
+            {% set read = false %}
+            {% set write = false %}
+              <tr>
+                <td>{{ employee.login }}</td>
+                <td>
+                  {% if user[employee.login] == "r-x" %}{% set read = true %}{% endif %}
+                  {{ forms.checkbox(employee.login, null , employee.login, read ) }}
+                </td>
+                <td>
+                  {% if user[employee.login] == "rwx" %}{% set write = true %}{% endif %}
+                  {{ forms.checkbox(employee.login, null , employee.login, write ) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
 
 
 {% endblock %}

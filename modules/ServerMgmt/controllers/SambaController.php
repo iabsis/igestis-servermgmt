@@ -34,8 +34,11 @@ class SambaController extends \IgestisController {
     			}
         }
 
+        $employees = $this->context->entityManager->getRepository("CoreContacts")->getEmployeesList();
+
         $this->context->render("ServerMgmt/pages/sambaListSharing.twig", array(
-            'data_table' =>  $folderTree
+            'data_table' =>  $folderTree,
+            'employee_list' => $employees
         ));
     }
 }
