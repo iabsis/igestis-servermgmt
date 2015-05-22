@@ -24,53 +24,40 @@
 {% import "table.twig" as table_data %}
 {{ table_data.datatable() }}
 
-<div class="accordion" id="folder-list">
-  {% for folder, user in data_table %}
-  <div class="accordion-group">
-    <div class="accordion-heading">
-      <div class="accordion-toggle" data-parent="#folder-list" >
-        <a href="#collapse{{ loop.index }}" data-toggle="collapse"><strong>{{ folder }}</strong> <small>({% trans %}click here to see users rights){% endtrans %}</small></a>
 
-          <a href="javascript:delete_account('{{ row.id }}')" class="btn btn-danger btn-mini">
-              <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
-          </a>
+<table cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-condensed table-striped table-hover">
+  <thead>
+    <tr>
+      <th>{% trans %}Folder{% endtrans %}</th>
+      <th>{% trans %}Username{% endtrans %}</th>
+      <th>{% trans %}Can read in folder{% endtrans %}</th>
+      <th>{% trans %}Can write in folder{% endtrans %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for folder, user in data_table %}
+      {% for employee in employee_list %}
+      <tr>
+        {% if loop.first %}
+          <td rowspan={{ loop.length }}>{{ folder }}</td>
+        {% endif %}
+          {% set read = false %}
+          {% set write = false %}
+        <td>{{ employee.login }}</td>
+        <td>
+          {% if user[employee.login] == "r-x" %}{% set read = true %}{% endif %}
+          {{ forms.checkbox(employee.login, null , employee.login, read ) }}
+        </td>
+        <td>
+          {% if user[employee.login] == "rwx" %}{% set write = true %}{% endif %}
+          {{ forms.checkbox(employee.login, null , employee.login, write ) }}
+        </td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
 
-      </div>
-
-    </div>
-    <div id="collapse{{ loop.index }}" class="accordion-body collapse out">
-      <div class="accordion-inner">
-        <table cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-condensed table-striped table-hover">
-          <thead>
-            <tr>
-                <th>{% trans %}Username{% endtrans %}</th>
-                <th>{% trans %}Can read in folder{% endtrans %}</th>
-                <th>{% trans %}Can write in folder{% endtrans %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for employee in employee_list %}
-            {% set read = false %}
-            {% set write = false %}
-              <tr>
-                <td>{{ employee.login }}</td>
-                <td>
-                  {% if user[employee.login] == "r-x" %}{% set read = true %}{% endif %}
-                  {{ forms.checkbox(employee.login, null , employee.login, read ) }}
-                </td>
-                <td>
-                  {% if user[employee.login] == "rwx" %}{% set write = true %}{% endif %}
-                  {{ forms.checkbox(employee.login, null , employee.login, write ) }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-  {% endfor %}
-</div>
 
 
 {% endblock %}
