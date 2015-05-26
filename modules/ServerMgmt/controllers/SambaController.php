@@ -41,4 +41,17 @@ class SambaController extends \IgestisController {
             'employee_list' => $employees
         ));
     }
+
+    public function changeRightAction($folderName, $employeeAccount, $right) {
+      $ajaxResponse = new \Igestis\Ajax\AjaxResult();
+
+      exec("/usr/bin/sudo ../modules/ServerMgmt/bin/helper setDataFolderAcl " . $employeeAccount . " " . $folderName . " " . $right, $message, $returncode);
+
+      if (returncode == 0) {
+        $ajaxResponse->addWizz(\Igestis\I18n\Translate::_("Right changed successfully"), \WIZZ::$WIZZ_SUCCESS);
+      } else {
+        $ajaxResponse->setError(\Igestis\I18n\Translate::_("Error during the folder right change: " . $message));
+      };
+
+    }
 }

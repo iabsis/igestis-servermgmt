@@ -34,19 +34,22 @@ case $action in
 
   setDataFolderAcl)
 
-    username=${1}
-    folder=${2}
-    right=${3}
+    username=${2}
+    folder=${3}
+    right=${4}
 
     case ${right} in
       read)
-        ${setfacl} u:${username}:r-x $(getValueConfig DATA_FOLDER_MGMT)/${folder}
+        ${setfacl} u:${username}:r-x $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>&1 || exit $?
       ;;
       write)
-        ${setfacl} u:${username}:rwx $(getValueConfig DATA_FOLDER_MGMT)/${folder}
+        ${setfacl} u:${username}:rwx $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>&1 || exit $?
       ;;
       none)
-        ${rmfacl} u:${username} $(getValueConfig DATA_FOLDER_MGMT)/${folder}
+        ${rmfacl} u:${username} $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>&1 || exit $?
+      ;;
+      *)
+        echo "Wrong right value, must be read, write or none." || exit 1
       ;;
     esac
 

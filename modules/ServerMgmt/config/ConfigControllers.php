@@ -25,6 +25,20 @@ class ConfigControllers extends \IgestisConfigController {
             ),
 
             array(
+              'id' => 'servermgmt_samba_change_right',
+              'Parameters' => array(
+                  'Module' => 'serverMgmt',
+                  'Action' => 'samba_change_right',
+                  'folderName' => '{VAR}[\s\S]+',
+                  'employeeAccount' => '{VAR}[\s\S]+',
+                  'right' => '{VAR}^write$|^read$|^none$'
+              ),
+              'Controller' => '\Igestis\Modules\ServerMgmt\SambaController',
+              'Action' => 'changeRightAction',
+              'Access' => array('CORE:ADMIN')
+          ),
+
+            array(
                 'id' => 'servermgmt_backup_index',
                 'Parameters' => array(
                     'Module' => 'serverMgmt',

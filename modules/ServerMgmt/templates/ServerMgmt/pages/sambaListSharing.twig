@@ -25,10 +25,10 @@
 {{ table_data.datatable() }}
 
 
-<table cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-condensed table-striped table-hover">
+<table id="list-right" cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-condensed table-striped table-hover">
   <thead>
     <tr>
-      <th>{% trans %}Folder{% endtrans %}</th>
+      <th>{% trans %}Folder name{% endtrans %}</th>
       <th>{% trans %}Username{% endtrans %}</th>
       <th>{% trans %}Can read in folder{% endtrans %}</th>
       <th>{% trans %}Can write in folder{% endtrans %}</th>
@@ -46,18 +46,29 @@
         <td>{{ employee.login }}</td>
         <td>
           {% if user[employee.login] == "r-x" %}{% set read = true %}{% endif %}
-          {{ forms.checkbox(employee.login, null , employee.login, read ) }}
+          <input class="span9"
+            name="{{ employee.login }}"
+            value="{{ employee.login }}"
+            id="id-{{ employee.login }}"
+            type="checkbox"
+            {% if read == true %}checked="checked"{% endif %}
+            onclick="ServerMgmt.SambaController.changeRight(this)">
         </td>
         <td>
           {% if user[employee.login] == "rwx" %}{% set write = true %}{% endif %}
-          {{ forms.checkbox(employee.login, null , employee.login, write ) }}
+          <input class="span9"
+            name="{{ employee.login }}"
+            value="{{ employee.login }}"
+            id="id-{{ employee.login }}"
+            type="checkbox"
+            {% if write == true %}checked="checked"{% endif %}
+            onclick="ServerMgmt.SambaController.changeRight(this)">
         </td>
       </tr>
       {% endfor %}
     {% endfor %}
   </tbody>
 </table>
-
 
 
 {% endblock %}
