@@ -38,17 +38,40 @@ class ConfigControllers extends \IgestisConfigController {
               'Access' => array('CORE:ADMIN')
           ),
 
-            array(
-                'id' => 'servermgmt_backup_index',
-                'Parameters' => array(
-                    'Module' => 'serverMgmt',
-                    'Action' => 'backup_index'
-                ),
-                'Controller' => '\Igestis\Modules\ServerMgmt\BackupController',
-                'Action' => 'indexAction',
-                'Access' => array('CORE:ADMIN')
+          array(
+            'id' => 'servermgmt_folder_new',
+            'Parameters' => array(
+                'Module' => 'serverMgmt',
+                'Action' => 'servermgmt_folder_new'
             ),
+            'Controller' => '\Igestis\Modules\ServerMgmt\SambaController',
+            'Action' => 'createNewFolder',
+            'Access' => array('CORE:ADMIN')
+          ),
 
-         );
+          array(
+            'id' => 'servermgmt_folder_delete',
+            'Parameters' => array(
+                'Module' => 'serverMgmt',
+                'Action' => 'servermgmt_folder_delete',
+                'folderName' => '{VAR}[\s\S]+'
+            ),
+            'Controller' => '\Igestis\Modules\ServerMgmt\SambaController',
+            'Action' => 'deleteFolder',
+            'Access' => array('CORE:ADMIN')
+          ),
+
+          array(
+              'id' => 'servermgmt_backup_index',
+              'Parameters' => array(
+                  'Module' => 'serverMgmt',
+                  'Action' => 'backup_index'
+              ),
+              'Controller' => '\Igestis\Modules\ServerMgmt\BackupController',
+              'Action' => 'indexAction',
+              'Access' => array('CORE:ADMIN')
+          ),
+
+       );
     }
 }

@@ -8,6 +8,9 @@ args=${@}
 getfacl="/bin/getfacl"
 setfacl="/bin/setfacl -m"
 rmfacl="/bin/setfacl -x"
+mkdir="/bin/mkdir -p"
+mv="/bin/mv"
+rmdir="/bin/rmdir"
 
 getValueConfig()
 {
@@ -22,21 +25,19 @@ case $action in
 
   getDataFolderAcl)
 
-    aclList=$(${getfacl} $(getValueConfig DATA_FOLDER_MGMT)/* 2>/dev/null)
+    aclList="$(${getfacl} $(getValueConfig DATA_FOLDER_MGMT)/* 2>/dev/null)"
 
     while IFS= read -r line ; do
-        echo ${line}
+        echo "${line}"
     done <<< "$aclList"
-
-    exit
 
   ;;
 
   setDataFolderAcl)
 
-    username=${2}
-    folder=${3}
-    right=${4}
+    username="${2}"
+    folder="${3}"
+    right="${4}"
 
     case ${right} in
       read)
@@ -54,5 +55,34 @@ case $action in
     esac
 
   ;;
+
+  createDataFolder)
+
+    folder="${2}"
+
+    if [ -d "$(getValueConfig DATA_FOLDER_MGMT)/${folder}" ] ; then
+      echo "this folder already exists ${folder}"
+      exit 1
+    fi
+    ${mkdir} "$(getValueConfig DATA_FOLDER_MGMT)/${folder}" 2>&1 || exit $?
+
+  ;;
+
+  renameDataFolder)
+
+    folderOld="${2}"
+    folderNew="${3}"
+    ${mv} "$(getValueConfig DATA_FOLDER_MGMT)/${folderOld}" "$(getValueConfig DATA_FOLDER_MGMT)/${folderNew}" 2>&1 || exit $?
+
+  ;;
+
+  deleteDataFolder)
+
+
+    folder="${2}"
+    ${rmdir} "$(getValueConfig DATA_FOLDER_MGMT)/${folder}" 2>&1 || exit $?
+
+  ;;
+
 
 esac
