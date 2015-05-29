@@ -36,9 +36,24 @@ ServerMgmt.SambaController.changeRight = function(input) {
         $(input).removeAttr('checked');
         bootbox.alert(data.error);
       } else {
-         console.debug("success");
-         console.debug($(input).parent());
-      }
+         if ($(input).attr('data-right') == "write") {
+           if ($(input).attr('checked') == "checked") {
+             $(input).parent().parent().children().each(function() {
+               if ($(this).children().attr('data-right') == "read") {
+                 $(this).children().attr('checked','checked');
+                 $(this).children().attr('disabled','true');
+               }
+             });
+           } else {
+             $(input).parent().parent().children().each(function() {
+               if ($(this).children().attr('data-right') == "read") {
+                 $(this).children().removeAttr('checked');
+                 $(this).children().removeAttr('disabled');
+               }
+             });
+           }
+         }
+       }
     },
     error: function(e) {
       bootbox.alert("An unknown error has occured");
