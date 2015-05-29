@@ -7,6 +7,8 @@
 
 {% block content %}{{ parent() }}
 
+<div id="id-wizz"></div>
+
 <script type="text/javascript">
     function delete_folder(name) {
         bootbox.confirm("{% trans %}Are you sure that you want to delete this folder ?{% endtrans %}", "{% trans %}No{% endtrans %}", "{% trans %}Yes{% endtrans %}", function(result) {
@@ -62,6 +64,7 @@
         <td>{{ employee.login }}</td>
         <td>
           {% if user[employee.login] == "r-x" %}{% set read = true %}{% endif %}
+          {% if user[employee.login] == "rwx" %}{% set write = true %}{% endif %}
           <input class="span9"
             name="{{ employee.login }}"
             value="{{ employee.login }}"
@@ -70,11 +73,11 @@
             data-folder="{{ folder }}"
             data-right="read"
             type="checkbox"
-            {% if read == true %}checked="checked"{% endif %}
+            {% if write == true %}disabled="true"{% endif %}
+            {% if read == true or write == true %}checked="checked"{% endif %}
             onclick="ServerMgmt.SambaController.changeRight(this)">
         </td>
         <td>
-          {% if user[employee.login] == "rwx" %}{% set write = true %}{% endif %}
           <input class="span9"
             name="{{ employee.login }}"
             value="{{ employee.login }}"
