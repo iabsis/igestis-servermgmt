@@ -66,6 +66,9 @@
             name="{{ employee.login }}"
             value="{{ employee.login }}"
             id="id-{{ employee.login }}"
+            data-login="{{ employee.login }}"
+            data-folder="{{ folder }}"
+            data-right="read"
             type="checkbox"
             {% if read == true %}checked="checked"{% endif %}
             onclick="ServerMgmt.SambaController.changeRight(this)">
@@ -76,6 +79,9 @@
             name="{{ employee.login }}"
             value="{{ employee.login }}"
             id="id-{{ employee.login }}"
+            data-login="{{ employee.login }}"
+            data-folder="{{ folder }}"
+            data-right="write"
             type="checkbox"
             {% if write == true %}checked="checked"{% endif %}
             onclick="ServerMgmt.SambaController.changeRight(this)">

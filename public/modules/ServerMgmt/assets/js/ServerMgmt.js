@@ -13,21 +13,37 @@ var ServerMgmt = function() {
 ServerMgmt.SambaController.changeRight = function(input) {
 
 
-  console.debug(input.id);
+  console.debug($(input).attr('data-login'));
+  console.debug($(input).attr('data-folder'));
+  console.debug($(input).attr('checked'));
 
+  login = $(input).attr('data-login');
+  folder = $(input).attr('data-folder');
+  // Do the condition here
+  if ($(input).attr('checked')) {
+    right = $(input).attr('data-right');
+  } else {
+    right = "none";
+  }
 
   $.ajax({
     dataType: "json",
-    url: getCustomerProjectUrl + e.val,
-    success: function(jsonData) {
-        $('#form_data [name=project] option').remove();
-        $('#form_data [name=project]').append("<option></option>");
-        for (var i = jsonData.length - 1; i >= 0; i--) {
-            $('#form_data [name=project]').append('<option value="' + jsonData[i].id + '">' + jsonData[i].text + '</option>');
-        };
-
-        $('#form_data [name=project]').select2({ allowClear: true });
-    }
+    type: "GET",
+    url: "http://igestis3/igestis/index.php",
+    data: "Module=serverMgmt&Action=samba_change_right&folderName="+folder+"&employeeAccount="+login+"&right="+right,
+    success: function(data) {
+      if(data.hasOwnProperty('error')) {
+        $(input).removeAttr('checked');
+        bootbox.alert(data.error);
+      } else {
+         console.debug("success");
+         console.debug($(input).parent());
+      }
+    },
+    error: function(e) {
+      bootbox.alert("An unknown error has occured");
+      //console.log(e.message);
+   }
   });
 
 };

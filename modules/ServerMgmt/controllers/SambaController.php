@@ -42,18 +42,20 @@ class SambaController extends \IgestisController {
     }
 
     public function changeRightAction($folderName, $employeeAccount, $right) {
-      $ajaxResponse = new \Igestis\Ajax\AjaxResult();
 
       exec("/usr/bin/sudo ../modules/ServerMgmt/bin/helper setDataFolderAcl "
          . escapeshellarg($employeeAccount) . " "
          . escapeshellarg(trim($folderName)) . " "
          . escapeshellarg($right), $message, $returncode);
 
-      if (returncode == 0) {
-        $ajaxResponse->addWizz(\Igestis\I18n\Translate::_("Right changed successfully"), \WIZZ::$WIZZ_SUCCESS);
+      if ($returncode == 0) {
+        header("Content-Type: application/json");
+        die(json_encode(array('result'=>'success')));
       } else {
-        $ajaxResponse->setError(\Igestis\I18n\Translate::_("Error during the folder right change: " . $message));
-      };
+        header("Content-Type: application/json");
+        die(json_encode(array('error'=>$message[0])));
+      }
+
     }
 
     public function createNewFolder() {

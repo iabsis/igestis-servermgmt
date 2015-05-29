@@ -41,13 +41,67 @@ case $action in
 
     case ${right} in
       read)
-        ${setfacl} u:${username}:r-x $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>&1 || exit $?
+        ${setfacl} u:${username}:r-x $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>/dev/null || (
+        returncode=$?
+        case $returncode in
+          0)
+            exit 0
+          ;;
+          1)
+            echo "the folder doesn't exists"
+            exit $returncode
+          ;;
+          2)
+            echo "the user doesn't exists"
+            exit $returncode
+          ;;
+          *)
+            echo "unknown error $returncode"
+            exit $returncode
+          ;;
+        esac)
       ;;
       write)
-        ${setfacl} u:${username}:rwx $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>&1 || exit $?
+        ${setfacl} u:${username}:rwx $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>/dev/null || (
+        returncode=$?
+        case $returncode in
+          0)
+            exit 0
+          ;;
+          1)
+            echo "the folder doesn't exists"
+            exit $returncode
+          ;;
+          2)
+            echo "the user doesn't exists"
+            exit $returncode
+          ;;
+          *)
+            echo "unknown error $returncode"
+            exit $returncode
+          ;;
+        esac)
       ;;
       none)
-        ${rmfacl} u:${username} $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>&1 || exit $?
+        ${rmfacl} u:${username} $(getValueConfig DATA_FOLDER_MGMT)/${folder}  2>/dev/null || (
+        returncode=$?
+        case $returncode in
+          0)
+            exit 0
+          ;;
+          1)
+            echo "the folder doesn't exists"
+            exit $returncode
+          ;;
+          2)
+            echo "the user doesn't exists from setfacl command line"
+            exit $returncode
+          ;;
+          *)
+            echo "unknown error $returncode"
+            exit $returncode
+          ;;
+        esac)
       ;;
       *)
         echo "Wrong right value, must be read, write or none." || exit 1
@@ -61,7 +115,7 @@ case $action in
     folder="${2}"
 
     if [ -d "$(getValueConfig DATA_FOLDER_MGMT)/${folder}" ] ; then
-      echo "this folder already exists ${folder}"
+      echo "this folder already exists"
       exit 1
     fi
     ${mkdir} "$(getValueConfig DATA_FOLDER_MGMT)/${folder}" 2>&1 || exit $?
