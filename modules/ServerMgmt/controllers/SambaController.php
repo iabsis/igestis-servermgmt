@@ -83,6 +83,41 @@ class SambaController extends \IgestisController {
 
     }
 
+
+    public function renameFolder()
+    {
+        $ajaxResponse = new \Igestis\Ajax\AjaxResult();
+
+        if ($this->request->IsPost()) {
+
+            $previousName = $this->request->getPost("previousName");
+            $newName = $this->request->getPost("newName");
+
+            if (strstr($previousName, "/") || strstr($newName, "/")) {
+                $ajaxResponse
+                    ->addWizz(\Igestis\I18n\Translate::_("Error during the folder creation: the folder cannot contain any slashes"), \WIZZ::$WIZZ_ERROR)
+                    ->render();
+            }
+            exec("/usr/bin/sudo ../modules/ServerMgmt/bin/helper renameDataFolder " . escapeshellarg(trim($previousName)) . " " . escapeshellarg(trim($newName)), $message, $returncode);
+
+            if ($returncode == 0) {
+                new \wizz(_("The folder " . $folderName . " has been created successfully"), \WIZZ::$WIZZ_SUCCESS);
+                $ajaxResponse
+                    ->addWizz(\Igestis\I18n\Translate::_(sprintf("The '%s' folder has been moved successfully", $previousName)), \WIZZ::$WIZZ_SUCCESS)
+                    ->render();
+            } else {
+                $ajaxResponse
+                    ->addWizz(\Igestis\I18n\Translate::_(sprintf("Error during the move of '%s' folder:  %s", $previousName, $message[0])), \WIZZ::$WIZZ_ERROR)
+                    ->render();
+            }
+        } else {
+            $ajaxResponse
+                ->addWizz(\Igestis\I18n\Translate::_("No post data"), \WIZZ::$WIZZ_ERROR)
+                ->render();
+        }
+
+    }
+
     public function deleteFolder($folderName) {
 
       exec("/usr/bin/sudo ../modules/ServerMgmt/bin/helper deleteDataFolder "

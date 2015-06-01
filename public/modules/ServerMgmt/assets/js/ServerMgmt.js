@@ -4,11 +4,60 @@ var ServerMgmt = function() {
    _public.SambaController = {};
    _public.BackupController = {};
    _public.common = {};
+   _public.init = function() {};
 
    return _public;
 }();
 
+ServerMgmt.init = function(options) {
+    $(function() {
+        /**
+         * jQUerySelector to represent the line of the table currently edited
+         * @type {jQyer}
+         */
+        var currentEditedLine = null;
 
+        /**
+         * Click event of "rename" buttons
+         */
+        $("body").on("click", "[data-rename-folder]", function() {
+            $("#id-previousName").val($(this).data("renameFolder"));
+            $("#id-newName").val($(this).data("renameFolder"));
+            currentEditedLine = $(this).closest("tr");
+        });
+
+        /**
+         * Event when validating the rename form
+         */
+        $("#rename-folder-form").on("submit", function (e) {
+            e.preventDefault();
+            var ajaxUrl = $(this).attr("action");
+            var newName = $("#id-newName").val();
+
+            // Sending the form in post format and parse the returned json
+            $.ajax({
+                dataType: "json",
+                type: "POST",
+                url: ajaxUrl,
+                data: $(this).serialize(),
+                success: function(jsonData) {
+                    igestisParseJsonAjaxResult(jsonData);
+                    // ON success, we update the new folder name in the table ...
+                    currentEditedLine.find(".folder-name").text(newName);
+                    // ... and in the data-rename-folder attribute
+                    currentEditedLine.find("[data-rename-folder]").data("renameFolder", newName);
+                },
+                error: function () {
+                    igestisWizz("An error has occured while trying to rename the folder", "WIZZ_ERROR", "#id-wizz", false);
+                },
+                "complete": function() {
+                    $("#rename-folder-modal").modal("hide");
+                }
+            });
+        });
+  
+    });
+}
 
 ServerMgmt.SambaController.changeRight = function(input) {
 

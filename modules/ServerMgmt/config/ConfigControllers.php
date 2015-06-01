@@ -50,6 +50,17 @@ class ConfigControllers extends \IgestisConfigController {
           ),
 
           array(
+            'id' => 'servermgmt_folder_rename',
+            'Parameters' => array(
+                'Module' => 'serverMgmt',
+                'Action' => 'servermgmt_folder_rename'
+            ),
+            'Controller' => '\Igestis\Modules\ServerMgmt\SambaController',
+            'Action' => 'renameFolder',
+            'Access' => array('CORE:ADMIN')
+          ),
+
+          array(
             'id' => 'servermgmt_folder_delete',
             'Parameters' => array(
                 'Module' => 'serverMgmt',

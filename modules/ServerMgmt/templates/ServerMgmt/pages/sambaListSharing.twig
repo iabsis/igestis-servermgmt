@@ -15,6 +15,8 @@
             if(result) window.location.href="{{ url('servermgmt_folder_delete', {"folderName":''}) }}" + name;
         });
     }
+
+    ServerMgmt.init();
 </script>
 
 <div id="new-folder-modal" class="modal hide fade">
@@ -29,6 +31,23 @@
         <div class="modal-footer">
             <a href="#" class="btn" data-dismiss="modal" >Close</a>
             <button type="submit" class="btn btn-primary">{% trans %}Create new folder{% endtrans %}</button>
+        </div>
+    </form>
+</div>
+
+<div id="rename-folder-modal" class="modal hide fade">
+    <form class="modal-form form-horizontal" action="{{ url('servermgmt_folder_rename') }}" id="rename-folder-form" method="post">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h3>{% trans %}Rename folder{% endtrans %}</h3>
+        </div>
+        <div class="modal-body">
+          {{ forms.input('previousName', 'Current folder name'|trans, null, null, null, null, null, "readonly") }}
+          {{ forms.input('newName', 'New folder name'|trans) }}
+        </div>
+        <div class="modal-footer">
+            <a href="#" class="btn" data-dismiss="modal" >Close</a>
+            <button type="submit" class="btn btn-primary">{% trans %}Rename folder{% endtrans %}</button>
         </div>
     </form>
 </div>
@@ -57,7 +76,7 @@
       {% for employee in employee_list %}
       <tr>
         {% if loop.first %}
-          <td rowspan={{ loop.length }}>{{ folder }}</td>
+          <td rowspan={{ loop.length }}><span class="folder-name">{{ folder }}</span></td>
         {% endif %}
           {% set read = false %}
           {% set write = false %}
@@ -91,7 +110,7 @@
         </td>
         {% if loop.first %}
           <td rowspan={{ loop.length }}>
-            <a href="{{ url('rename_folder', {'Id':row.id}) }}" class="btn btn-mini a-visible-line-on-over">
+            <a href="#rename-folder-modal" data-toggle="modal" data-rename-folder="{{ folder }}" class="btn btn-mini a-visible-line-on-over">
               <i class="icon-edit"></i> {% trans %}Rename{% endtrans %}
             </a>
             <a href="javascript:delete_folder('{{ folder }}')" class="btn btn-danger btn-mini a-visible-line-on-over">
