@@ -1,7 +1,7 @@
-Source: igestis-ishare
+Source: igestis-servermgmt
 Section: web
 Priority: extra
-Maintainer: Gilles Hemmerlé <gilles.h@iabsis.com>
+Maintainer: Olivier Bitsch <olivier.b@iabsis.com>
 Build-Depends: debhelper (>= 5)
 Standards-Version: 3.7.2
 

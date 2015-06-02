@@ -113,7 +113,7 @@
             <a href="#rename-folder-modal" data-toggle="modal" data-rename-folder="{{ folder }}" class="btn btn-mini a-visible-line-on-over">
               <i class="icon-edit"></i> {% trans %}Rename{% endtrans %}
             </a>
-            <a href="javascript:delete_folder('{{ folder }}')" class="btn btn-danger btn-mini a-visible-line-on-over">
+            <a href="javascript:delete_folder('{{ folder|escape('js') }}')" class="btn btn-danger btn-mini a-visible-line-on-over">
               <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
             </a>
           </td>

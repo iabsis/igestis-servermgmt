@@ -1,0 +1,3 @@
+install/*		    		usr/share/doc/igestis/sample
+modules				usr/share/igestis
+public				usr/share/igestis
