@@ -10,13 +10,9 @@
 <div id="id-wizz"></div>
 
 <script type="text/javascript">
-    function delete_folder(name) {
-        bootbox.confirm("{% trans %}Are you sure that you want to delete this folder ?{% endtrans %}", "{% trans %}No{% endtrans %}", "{% trans %}Yes{% endtrans %}", function(result) {
-            if(result) window.location.href="{{ url('servermgmt_folder_delete', {"folderName":''}) }}" + name;
-        });
-    }
-
-    ServerMgmt.init();
+    ServerMgmt.init({
+        deleteUrl: "{{ url('servermgmt_folder_delete', {"folderName":''}) }}"
+    });
 </script>
 
 <div id="new-folder-modal" class="modal hide fade">
@@ -42,8 +38,8 @@
             <h3>{% trans %}Rename folder{% endtrans %}</h3>
         </div>
         <div class="modal-body">
-          {{ forms.input('previousName', 'Current folder name'|trans, null, null, null, null, null, "readonly") }}
-          {{ forms.input('newName', 'New folder name'|trans) }}
+            <input type="hidden" name="previousName" id="id-previousName">
+            {{ forms.input('newName', 'New folder name'|trans) }}
         </div>
         <div class="modal-footer">
             <a href="#" class="btn" data-dismiss="modal" >Close</a>
@@ -113,7 +109,7 @@
             <a href="#rename-folder-modal" data-toggle="modal" data-rename-folder="{{ folder }}" class="btn btn-mini a-visible-line-on-over">
               <i class="icon-edit"></i> {% trans %}Rename{% endtrans %}
             </a>
-            <a href="javascript:delete_folder('{{ folder|escape('js') }}')" class="btn btn-danger btn-mini a-visible-line-on-over">
+            <a href="javascript:;" data-delete-folder= "{{ folder }}" class="btn btn-danger btn-mini a-visible-line-on-over">
               <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
             </a>
           </td>
