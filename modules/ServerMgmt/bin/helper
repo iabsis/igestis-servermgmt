@@ -41,14 +41,14 @@ case $action in
 
     case ${right} in
       read)
-        ${setfacl} u:${username}:r-x $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>/dev/null || (
+        ${setfacl} u:${username}:r-x $(getValueConfig DATA_FOLDER_MGMT)/"${folder}" 2>/dev/null || (
         returncode=$?
         case $returncode in
           0)
             exit 0
           ;;
           1)
-            echo "the folder doesn't exists"
+            echo "the folder doesn't exists \"${folder}\""
             exit $returncode
           ;;
           2)
@@ -62,14 +62,14 @@ case $action in
         esac)
       ;;
       write)
-        ${setfacl} u:${username}:rwx $(getValueConfig DATA_FOLDER_MGMT)/${folder} 2>/dev/null || (
+        ${setfacl} u:${username}:rwx $(getValueConfig DATA_FOLDER_MGMT)/"${folder}" 2>/dev/null || (
         returncode=$?
         case $returncode in
           0)
             exit 0
           ;;
           1)
-            echo "the folder doesn't exists"
+            echo "the folder doesn't exists \"${folder}\""
             exit $returncode
           ;;
           2)
@@ -83,14 +83,14 @@ case $action in
         esac)
       ;;
       none)
-        ${rmfacl} u:${username} $(getValueConfig DATA_FOLDER_MGMT)/${folder}  2>/dev/null || (
+        ${rmfacl} u:${username} $(getValueConfig DATA_FOLDER_MGMT)/"${folder}"  2>/dev/null || (
         returncode=$?
         case $returncode in
           0)
             exit 0
           ;;
           1)
-            echo "the folder doesn't exists"
+            echo "the folder doesn't exists \"${folder}\""
             exit $returncode
           ;;
           2)
