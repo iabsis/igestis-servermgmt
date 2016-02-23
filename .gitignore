@@ -1,1 +1,6 @@
 .remote-sync.json
+debian/igestis-servermgmt/
+build-stamp
+configure-stamp
+debian/igestis-servermgmt.debhelper.log
+debian/igestis-servermgmt.substvars
