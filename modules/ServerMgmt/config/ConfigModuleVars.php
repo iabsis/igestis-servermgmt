@@ -110,4 +110,9 @@ class ConfigModuleVars
         return self::$params['SAMBA_DOMAIN'];
     }
 
+    public static function virtualDomain()
+    {
+        return self::$params['VIRTUAL_DOMAIN'];
+    }
+
 }

@@ -25,7 +25,15 @@ class PostfixController extends \IgestisController {
         if (is_array($this->request->getPost("alias"))) {
             foreach ($this->request->getPost("alias") as $id => $alias) {
                 if (isset($this->request->getPost("user")[$id]) && is_array($this->request->getPost("user")[$id])) {
-                    $data .= $alias . ": " . implode($this->request->getPost("user")[$id], ", ") . "\n";
+                    if (! ConfigModuleVars::virtualDomain()) {
+                        $users = $this->request->getPost("user")[$id];
+                    } else {
+                        unset($users);
+                        foreach ($this->request->getPost("user")[$id] as $user) {
+                            $users[] = $user . "@" . ConfigModuleVars::virtualDomain();
+                        }
+                    }
+                    $data .= $alias . ": " . implode($users, ", ") . "\n";
                 }
             }
         }
@@ -52,7 +60,13 @@ class PostfixController extends \IgestisController {
 
           $line = str_replace(" ", "", $line);
           $currentLine = explode(':', $line);
-          $data[$currentLine[0]] = explode(",", $currentLine[1]);
+          if (! ConfigModuleVars::virtualDomain()) {
+              $data[$currentLine[0]] = explode(",", $currentLine[1]);
+          } else {
+              foreach (explode(",", $currentLine[1]) as $user) {
+                  $data[$currentLine[0]][] = explode("@", $user)[0];
+              }
+          }
 
       }
 
