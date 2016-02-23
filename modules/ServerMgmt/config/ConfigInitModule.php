@@ -29,5 +29,11 @@ class ConfigInitModule implements \Igestis\Interfaces\ConfigMenuInterface {
                 \Igestis\I18n\Translate::_("Backup status", ConfigModuleVars::textDomain()),
                 "servermgmt_backup_index"
         );
+
+        $menu->addItem(
+                \Igestis\I18n\Translate::_("Administration", ConfigModuleVars::textDomain()),
+                \Igestis\I18n\Translate::_("Mail configuration", ConfigModuleVars::textDomain()),
+                "servermgmt_postfix_index"
+        );
     }
 }

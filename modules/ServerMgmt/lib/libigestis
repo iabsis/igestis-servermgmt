@@ -76,7 +76,7 @@ EOF
 }
 
 # TODO warning: this function is absolutely not finished
-randomizePasword() {
+randomizePassword() {
   service=$1
   user=$2
 

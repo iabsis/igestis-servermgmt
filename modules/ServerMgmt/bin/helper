@@ -11,6 +11,7 @@ rmfacl="/bin/setfacl -x"
 mkdir="/bin/mkdir -p"
 mv="/bin/mv"
 rmdir="/bin/rmdir"
+newliases="/usr/bin/newaliases"
 
 getValueConfig()
 {
@@ -39,6 +40,8 @@ case $action in
     folder="${3}"
     right="${4}"
 
+    #TODO: add condition in case a domain name must be prefixed with the var SAMBA_DOMAIN.
+
     case ${right} in
       read)
         ${setfacl} u:${username}:r-x $(getValueConfig DATA_FOLDER_MGMT)/"${folder}" 2>/dev/null || (
@@ -52,7 +55,7 @@ case $action in
             exit $returncode
           ;;
           2)
-            echo "the user doesn't exists"
+            echo "the user doesn't exists from setfacl command line \"${username}\""
             exit $returncode
           ;;
           *)
@@ -73,7 +76,7 @@ case $action in
             exit $returncode
           ;;
           2)
-            echo "the user doesn't exists"
+            echo "the user doesn't exists from setfacl command line \"${username}\""
             exit $returncode
           ;;
           *)
@@ -94,7 +97,7 @@ case $action in
             exit $returncode
           ;;
           2)
-            echo "the user doesn't exists from setfacl command line"
+            echo "the user doesn't exists from setfacl command line \"${username}\""
             exit $returncode
           ;;
           *)
@@ -135,6 +138,13 @@ case $action in
 
     folder="${2}"
     ${rmdir} "$(getValueConfig DATA_FOLDER_MGMT)/${folder}" 2>&1 || exit $?
+
+  ;;
+
+  updateAliases)
+
+    ${newliases}
+    exit $?
 
   ;;
 

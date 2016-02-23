@@ -43,20 +43,24 @@ class SambaController extends \IgestisController {
 
     public function changeRightAction($folderName, $employeeAccount, $right) {
 
-      exec("/usr/bin/sudo ../modules/ServerMgmt/bin/helper setDataFolderAcl "
-         . escapeshellarg($employeeAccount) . " "
-         . escapeshellarg(trim($folderName)) . " "
-         . escapeshellarg($right), $message, $returncode);
+        if (ConfigModuleVars::sambaDomain()) {
+            $employeeAccount = ConfigModuleVars::sambaDomain() . "\\" . $employeeAccount;
+        }
 
-      if ($returncode == 0) {
-        header("Content-Type: application/json");
-        die(json_encode(array('result'=>'success')));
-      } else {
-        header("Content-Type: application/json");
-        die(json_encode(array('error'=>$message[0])));
-      }
+        exec("/usr/bin/sudo ../modules/ServerMgmt/bin/helper setDataFolderAcl "
+            . escapeshellarg($employeeAccount) . " "
+            . escapeshellarg(trim($folderName)) . " "
+            . escapeshellarg($right), $message, $returncode);
 
-    }
+        if ($returncode == 0) {
+            header("Content-Type: application/json");
+            die(json_encode(array('result'=>'success')));
+        } else {
+            header("Content-Type: application/json");
+            die(json_encode(array('error'=>$message[0])));
+        }
+
+        }
 
     public function createNewFolder() {
 

@@ -90,9 +90,24 @@ class ConfigModuleVars
         return self::$params['DATA_FOLDER_MGMT'];
     }
 
+    /**
+     * Return the aliases file
+     * @return string shared folder
+     */
+    public static function aliasesFile()
+    {
+        return self::$params['ALIASES_FILE'];
+    }
+
+
     public static function backupLogFile()
     {
         return self::$params['BACKUPNINJA_LOG_FILE'];
+    }
+
+    public static function sambaDomain()
+    {
+        return self::$params['SAMBA_DOMAIN'];
     }
 
 }

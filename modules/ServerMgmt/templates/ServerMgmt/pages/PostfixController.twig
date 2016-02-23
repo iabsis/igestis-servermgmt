@@ -1,0 +1,135 @@
+{% extends "ServerMgmt/common.twig" %}
+
+{% set title = {
+                'title': "Mail configuration"|trans,
+                'help': "An alias is a virtual mail assigned to users. All mails sent to this alias will be forwarded to the selected user."|trans} %}
+
+{% block content %}{{ parent() }}
+
+<div class="pull-right">
+    <div class="btn btn-success btn-small addRowHandlers">
+        <i class="icon-plus-sign icon-white"></i>
+        {{ "Add a new alias"|trans }}
+    </div>
+</div>
+<br><br>
+
+<form target="" method="post">
+    <table id="list-alias" cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-condensed table-striped table-hover">
+      <thead>
+        <tr>
+          <th>{% trans %}Alias name{% endtrans %}</th>
+          <th>{% trans %}Display name{% endtrans %}</th>
+          <th>{% trans %}Username{% endtrans %}</th>
+          <th>{% trans %}Forward mail to{% endtrans %}</th>
+          <th>{% trans %}Actions{% endtrans %}</th>
+        </tr>
+      </thead>
+        {% for alias, user in row_data %}
+        <tbody>
+          {% for employee in employee_list %}
+          <tr>
+            {% if loop.first %}
+              <td rowspan={{ loop.length }}>
+                  <div class="input-prepend input-append">
+                      <input class="span6" name="alias[{{ loop.parent.loop.index }}]" value={{ alias }} autocomplete="off" type="text">
+                      <span class="add-on">@example.com</span>
+                  </div>
+              </td>
+            {% endif %}
+              {% set active = false %}
+            <td>{{ employee.firstname }} {{ employee.lastname }}</td>
+            <td>{{ employee.login }}</td>
+            <td>
+              {% if employee.login in user %}{% set active = true %}{% endif %}
+              <input class="span9"
+                name="user[{{ loop.parent.loop.index }}][]"
+                value="{{ employee.login }}"
+                id="active"
+                data-login="{{ employee.login }}"
+                data-alias="{{ alias }}"
+                data-right="active"
+                type="checkbox"
+                {% if active == true or write == true %}checked="checked"{% endif %}
+                onclick="ServerMgmt.PostfixController.changeAlias(this)">
+            </td>
+            {% if loop.first %}
+              <td rowspan={{ loop.length }}>
+                <a class="btn btn-danger btn-mini a-visible-line-on-over delRowHandlers">
+                  <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
+                </a>
+              </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% endfor %}
+        <tbody style="display: none;">
+        {% for employee in employee_list %}
+            <tr>
+              {% if loop.first %}
+                <td rowspan={{ loop.length }}>
+                    <div class="input-prepend input-append">
+                        <input class="span6" name="alias[{{ itemalias }}]" value="" autocomplete="off" type="text">
+                        <span class="add-on">@example.com</span>
+                    </div>
+                </td>
+              {% endif %}
+                {% set active = false %}
+              <td>{{ employee.firstname }} {{ employee.lastname }}</td>
+              <td>{{ employee.login }}</td>
+              <td>
+                {% if employee.login in user %}{% set active = true %}{% endif %}
+                <input class="span9"
+                  name="user[{{ row_data|length + 1 }}][]"
+                  value="{{ employee.login }}"
+                  id="active"
+                  data-login="{{ employee.login }}"
+                  data-alias="{{ alias }}"
+                  data-right="active"
+                  type="checkbox"
+                  {% if active == true or write == true %}checked="checked"{% endif %}
+                  onclick="ServerMgmt.PostfixController.changeAlias(this)">
+              </td>
+              {% if loop.first %}
+                <td rowspan={{ loop.length }}>
+                  <a class="btn btn-danger btn-mini a-visible-line-on-over delRowHandlers">
+                    <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
+                  </a>
+                </td>
+              {% endif %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{% trans %}Save changes{% endtrans %}</button>
+        <input class="btn" type="button" value="{% trans %}Cancel{% endtrans %}" onclick="javascript:history.go(-1);return true;">
+    </div>
+</form>
+
+<script>
+
+$(function() {
+
+    $(document).on('click', '.addRowHandlers', function(){
+        var table = $("table#list-alias");
+        var nbrow = parseInt(table.find("tbody").length) + 1;
+        var row = table.children('tbody:last');
+
+        var clone = row.clone().show();
+        clone.find("input[type=text]").attr("name", "alias["+nbrow+"]");
+        clone.find("input[type=checkbox]").attr("name", "user["+nbrow+"][]");
+        clone.appendTo( "table#list-alias" );
+        igestisInitTableHover();
+
+    });
+
+    $(document).on('click', '.delRowHandlers', function(){
+      $(this).parents('tbody').remove();
+    });
+});
+
+</script>
+
+{% endblock %}

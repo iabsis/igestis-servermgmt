@@ -83,6 +83,17 @@ class ConfigControllers extends \IgestisConfigController {
               'Access' => array('CORE:ADMIN')
           ),
 
+          array(
+              'id' => 'servermgmt_postfix_index',
+              'Parameters' => array(
+                  'Module' => 'serverMgmt',
+                  'Action' => 'postfix_index'
+              ),
+              'Controller' => '\Igestis\Modules\ServerMgmt\PostfixController',
+              'Action' => 'indexAction',
+              'Access' => array('CORE:ADMIN')
+          ),
+
        );
     }
 }
