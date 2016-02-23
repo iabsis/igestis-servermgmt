@@ -26,6 +26,17 @@ ServerMgmt.init = function(options) {
             currentEditedLine = $(this).closest("tr");
         });
 
+        $("body").on("click", "[data-delete-folder]", function() {
+            $("#id-previousName").val($(this).data("renameFolder"));
+            $("#id-newName").val($(this).data("renameFolder"));
+            var self = $(this);
+            bootbox.confirm("Are you sure that you want to delete this folder ?", "No", "Yes", function(result) {
+                if(result) window.location.href= options.deleteUrl + self.closest("tr").find(".folder-name").text();
+            });
+        });
+
+        
+
         /**
          * Event when validating the rename form
          */
