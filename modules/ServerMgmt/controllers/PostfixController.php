@@ -14,9 +14,9 @@ class PostfixController extends \IgestisController {
     public function indexAction() {
 
       if (! is_readable(ConfigModuleVars::aliasesFile())) {
-          new \wizz(\Igestis\I18n\Translate::_(sprintf("Warning: the file %s is not readable by the webserver", ConfigModuleVars::aliasesFile())), \wizz::WIZZ_ERROR);
+          new \wizz(\Igestis\I18n\Translate::_(sprintf("Warning: the file '%s' is not readable by the webserver", ConfigModuleVars::aliasesFile())), \wizz::$WIZZ_ERROR);
       } elseif (! is_writable(ConfigModuleVars::aliasesFile())) {
-          new \wizz(\Igestis\I18n\Translate::_(sprintf("Warning: the file %s is not writeable by the webserver", ConfigModuleVars::aliasesFile())), \wizz::WIZZ_WARNING);
+          new \wizz(\Igestis\I18n\Translate::_(sprintf("Warning: the file '%s' is not writeable by the webserver", ConfigModuleVars::aliasesFile())), \wizz::$WIZZ_WARNING);
       }
 
 
@@ -42,9 +42,9 @@ class PostfixController extends \IgestisController {
 
         exec("/usr/bin/sudo ../modules/ServerMgmt/bin/helper updateAliases", $message, $returncode);
         if ($returncode == 0) {
-            new \wizz(\Igestis\I18n\Translate::_(sprintf("The changes have been successfully written to the aliases file", ConfigModuleVars::aliasesFile())), \wizz::WIZZ_SUCCESS);
+            new \wizz(\Igestis\I18n\Translate::_(sprintf("The changes have been successfully written to the aliases file", ConfigModuleVars::aliasesFile())), \wizz::$WIZZ_SUCCESS);
         } else {
-            new \wizz(\Igestis\I18n\Translate::_(sprintf("The changes have been written to the aliases file, but the following error occured: %s", $message)), \wizz::WIZZ_SUCCESS);
+            new \wizz(\Igestis\I18n\Translate::_(sprintf("The changes have been written to the aliases file, but the following error occured: %s", $message)), \wizz::$WIZZ_SUCCESS);
         }
 
         $this->redirect(ConfigControllers::createUrl("servermgmt_postfix_index"));

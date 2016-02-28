@@ -3,7 +3,6 @@
 
 // Le fichier de config se trouve dans le namespace du module
 namespace Igestis\Modules\ServerMgmt;
-
 /*
  * La classe ConfigInitModule sera lancée par le coeur de l'application à différents moments,
  * afin de  rapatrier la liste des droits ou les entrées du menu.

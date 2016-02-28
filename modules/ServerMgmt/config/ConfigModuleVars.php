@@ -9,6 +9,9 @@ namespace Igestis\Modules\ServerMgmt;
  */
 class ConfigModuleVars
 {
+    const textDomain = "ServerMgmt";
+    const version = "0.1";
+
     private static $version = null;
     private static $params;
 
@@ -78,6 +81,7 @@ class ConfigModuleVars
      */
     public static function textDomain()
     {
+        self::initConfigVars();
         return self::moduleName() . self::version();
     }
 
@@ -87,6 +91,7 @@ class ConfigModuleVars
      */
     public static function dataFolder()
     {
+        self::initConfigVars();
         return self::$params['DATA_FOLDER_MGMT'];
     }
 
@@ -96,22 +101,26 @@ class ConfigModuleVars
      */
     public static function aliasesFile()
     {
+        self::initConfigVars();
         return self::$params['ALIASES_FILE'];
     }
 
 
     public static function backupLogFile()
     {
+        self::initConfigVars();
         return self::$params['BACKUPNINJA_LOG_FILE'];
     }
 
     public static function sambaDomain()
     {
+        self::initConfigVars();
         return self::$params['SAMBA_DOMAIN'];
     }
 
     public static function virtualDomain()
     {
+        self::initConfigVars();
         return self::$params['VIRTUAL_DOMAIN'];
     }
 
