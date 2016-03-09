@@ -16,54 +16,89 @@
 
 <form target="" method="post">
     <table id="list-alias" cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-condensed table-striped table-hover">
-      <thead>
-        <tr>
-          <th>{% trans %}Alias name{% endtrans %}</th>
-          <th>{% trans %}Display name{% endtrans %}</th>
-          <th>{% trans %}Username{% endtrans %}</th>
-          <th>{% trans %}Forward mail to{% endtrans %}</th>
-          <th>{% trans %}Actions{% endtrans %}</th>
-        </tr>
-      </thead>
+        <thead>
+            <tr>
+                <th>{% trans %}Alias name{% endtrans %}</th>
+                <th>{% trans %}Users{% endtrans %}</th>
+                <th>{% trans %}Actions{% endtrans %}</th>
+            </tr>
+        </thead>
         {% for alias, user in row_data %}
-        <tbody>
-          {% for employee in employee_list %}
-          <tr>
-            {% if loop.first %}
-              <td rowspan={{ loop.length }}>
-                  <div class="input-prepend input-append">
-                      <input class="span6" name="alias[{{ loop.parent.loop.index }}]" value={{ alias }} autocomplete="off" type="text">
-                      <span class="add-on">@example.com</span>
-                  </div>
-              </td>
-            {% endif %}
-              {% set active = false %}
-            <td>{{ employee.firstname }} {{ employee.lastname }}</td>
-            <td>{{ employee.login }}</td>
-            <td>
-              {% if employee.login in user %}{% set active = true %}{% endif %}
-              <input class="span9"
-                name="user[{{ loop.parent.loop.index }}][]"
-                value="{{ employee.login }}"
-                id="active"
-                data-login="{{ employee.login }}"
-                data-alias="{{ alias }}"
-                data-right="active"
-                type="checkbox"
-                {% if active == true or write == true %}checked="checked"{% endif %}
-                onclick="ServerMgmt.PostfixController.changeAlias(this)">
-            </td>
-            {% if loop.first %}
-              <td rowspan={{ loop.length }}>
-                <a class="btn btn-danger btn-mini a-visible-line-on-over delRowHandlers">
-                  <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
-                </a>
-              </td>
-            {% endif %}
-          </tr>
-          {% endfor %}
-        </tbody>
+            <tbody>
+                <tr>
+                    <td class="column-alias">
+                        <div class="input-prepend input-append">
+                            <input class="span6" name="alias[{{ loop.index }}]" value="{{ alias }}" autocomplete="off" type="text">
+                            <span class="add-on">@example.com</span>
+                        </div>
+                    </td>
+                    <td class="column-users-list">
+                        {% for currentUser in user %}{% if not loop.first %}, {% endif %}{{ currentUser }}{% endfor %}
+                    </td>
+                    <td class="column-action">
+                        <div class="users-form">
+                            {% for employee in employee_list %}
+                            
+                               {% set active = false %}
+                               {% if employee.login in user %}{% set active = true %}{% endif %}
+                                <label class="checkbox">
+                                  <input
+                                    name="user[{{ loop.parent.loop.index }}][]"
+                                    value="{{ employee.login }}"
+                                    type="checkbox"
+                                    {% if active == true or write == true %}checked="checked"{% endif %}>
+                                    {{ employee.firstname }} {{ employee.lastname }}
+                                </label>
+                                
+                            {% endfor %}
+                        </div>
+                        
+                        <a class="btn btn-default btn-mini a-visible-line-on-over edit-alias" href="javascript:;">
+                            <i class="icon-trash icon-white"></i> {% trans %}Edit{% endtrans %}
+                        </a>
+
+                        <a class="btn btn-danger btn-mini a-visible-line-on-over delRowHandlers">
+                            <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
         {% endfor %}
+
+        <tbody style="display: none;">
+            <tr>
+                <td class="column-alias">
+                    <div class="input-prepend input-append">
+                        <input class="span6" name="alias[{{ loop.index }}]" value="" autocomplete="off" type="text">
+                        <span class="add-on">@example.com</span>
+                    </div>
+                </td>
+                <td class="column-users-list"></td>
+                <td class="column-action">
+                    <div class="users-form">
+                        {% for employee in employee_list %}
+                            <label class="checkbox">
+                              <input
+                                name=""
+                                value="{{ employee.login }}"
+                                type="checkbox">
+                                {{ employee.firstname }} {{ employee.lastname }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                    
+                    <a class="btn btn-default btn-mini a-visible-line-on-over edit-alias" href="javascript:;">
+                        <i class="icon-trash icon-white"></i> {% trans %}Edit{% endtrans %}
+                    </a>
+
+                    <a class="btn btn-danger btn-mini a-visible-line-on-over delRowHandlers">
+                        <i class="icon-trash icon-white"></i> {% trans %}Delete{% endtrans %}
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+
+        {#}
         <tbody style="display: none;">
         {% for employee in employee_list %}
             <tr>
@@ -101,6 +136,8 @@
             </tr>
         {% endfor %}
         </tbody>
+        #}
+
     </table>
     <div class="form-actions">
         <button type="submit" class="btn btn-primary">{% trans %}Save changes{% endtrans %}</button>
@@ -128,6 +165,26 @@ $(function() {
     $(document).on('click', '.delRowHandlers', function(){
       $(this).parents('tbody').remove();
     });
+
+    $(document).on("click", ".edit-alias", function(event) {
+        var $currentUsersForm = $(this).parents('tbody').find('.users-form').slideDown();
+        $('.users-form').not($currentUsersForm).slideUp();
+    });
+
+    $(document).on("change", ".users-form input[type=checkbox]", function(event) {
+        var usersList = '';
+        var first = true;
+        $(this).parents('.users-form').find('input[type=checkbox]:checked').each(function() {
+            if (!first) {
+                usersList += ', ';
+            }
+            usersList += $(this).val();
+            $(this).parents('tbody').find('.column-users-list').text(usersList);
+            first = false;
+        });
+        
+    });
+
 });
 
 </script>
